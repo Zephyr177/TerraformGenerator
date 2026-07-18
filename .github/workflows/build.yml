@@ -5,6 +5,10 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -33,4 +37,12 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Build with Gradle
-        run: ./gradlew deploy
+        run: ./gradlew :buildProj:shadowJar --no-daemon
+
+      - name: Upload plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TerraformGenerator-${{ github.sha }}
+          path: buildProj/build/libs/*.jar
+          if-no-files-found: error
+          retention-days: 14
