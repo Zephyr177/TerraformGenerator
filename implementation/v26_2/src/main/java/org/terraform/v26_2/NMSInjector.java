@@ -112,6 +112,23 @@ public class NMSInjector extends NMSInjectorAbstract {
     }
 
     @Override
+    public boolean setSpawner(PopulatorDataAbstract data, int rawX, int rawY, int rawZ,
+                              org.bukkit.entity.EntityType type) {
+        if (!(data instanceof PopulatorDataSpigotAPI pdata)) {
+            return false;
+        }
+
+        WorldGenLevel gas = ((CraftLimitedRegion) pdata.lr).getHandle();
+        new PopulatorData(gas,
+                gas.getChunk(data.getChunkX(), data.getChunkZ()),
+                null,
+                data.getChunkX(),
+                data.getChunkZ()
+        ).setSpawner(rawX, rawY, rawZ, type);
+        return true;
+    }
+
+    @Override
     public PopulatorDataICAAbstract getICAData(PopulatorDataAbstract data) {
         // This is for the damn bees
         if (data instanceof PopulatorDataSpigotAPI pdata) {

@@ -3,6 +3,7 @@ package org.terraform.coregen;
 import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.block.Beehive;
+import org.bukkit.entity.EntityType;
 import org.jetbrains.annotations.Nullable;
 import org.terraform.coregen.populatordata.PopulatorDataAbstract;
 import org.terraform.coregen.populatordata.PopulatorDataICAAbstract;
@@ -31,6 +32,10 @@ public abstract class NMSInjectorAbstract {
      * @return a populatorDataICA instance.
      */
     public abstract @Nullable PopulatorDataICAAbstract getICAData(PopulatorDataAbstract data);
+
+    public boolean setSpawner(PopulatorDataAbstract data, int rawX, int rawY, int rawZ, EntityType type) {
+        return false;
+    }
 
     /**
      * This was unironically the easiest way to add a bee to a

@@ -116,6 +116,11 @@ public class PopulatorDataSpigotAPI extends PopulatorDataAbstract
             return;
         }
 
+        if (TerraformGeneratorPlugin.injector != null
+            && TerraformGeneratorPlugin.injector.setSpawner(this, rawX, rawY, rawZ, type)) {
+            return;
+        }
+
         setType(rawX, rawY, rawZ, Material.SPAWNER);
         try {
             // This will give class cast exception sometimes. I'm not sure why.
@@ -136,6 +141,15 @@ public class PopulatorDataSpigotAPI extends PopulatorDataAbstract
             TerraformGeneratorPlugin.logger.error("Tried to lootTableChest outside of LR bounds at: "+x + "," + z + " from LR centered at chunk " + chunkX + "," + chunkZ);
             return;
         }
+
+        if (TerraformGeneratorPlugin.injector != null) {
+            PopulatorDataICAAbstract nmsData = TerraformGeneratorPlugin.injector.getICAData(this);
+            if (nmsData != null) {
+                nmsData.lootTableChest(x, y, z, table);
+                return;
+            }
+        }
+
         BlockState s = lr.getBlockState(x, y, z);
         if (s instanceof Lootable t) {
             t.setLootTable(table.bukkit());
