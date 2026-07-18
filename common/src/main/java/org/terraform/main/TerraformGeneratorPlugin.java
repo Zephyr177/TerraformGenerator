@@ -258,9 +258,9 @@ public class TerraformGeneratorPlugin extends JavaPlugin implements Listener {
 
     private static boolean isPaperOrFolia() {
         try {
-            Class.forName("io.papermc.paper.world.MoonPhase");
+            Bukkit.class.getMethod("getRegionScheduler");
             return true;
-        } catch (ClassNotFoundException e) {
+        } catch (NoSuchMethodException | SecurityException e) {
             return false;
         }
     }

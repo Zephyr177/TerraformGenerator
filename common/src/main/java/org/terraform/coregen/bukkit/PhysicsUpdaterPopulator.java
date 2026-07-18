@@ -65,21 +65,26 @@ public class PhysicsUpdaterPopulator extends BlockPopulator implements Listener 
             }
             Collection<SimpleLocation> changes = cache.remove(scl);
             if (changes != null) {
-                TerraformGeneratorPlugin.taskScheduler.execAsyncRegion(w,
-                    scl.getX(), scl.getZ(),
-                    ()-> {
-                        for (SimpleLocation entry : changes) {
-                            Block target = w.getBlockAt(entry.getX(), entry.getY(), entry.getZ());
-                            // Set block physics by calling setBlockData
-                            // Note that this should not be used for complex blocks.
-                            BlockData old = target.getBlockData();
-                            //TerraformGeneratorPlugin.logger.info("[PhysicsUpdaterPopulator] " + target.getLocation());
-                            target.setType(Material.AIR);
-                            target.setBlockData(old, true);
-                        }
-                    });
+                scheduleChanges(w, scl, changes);
             }
         }
+    }
+
+    private static void scheduleChanges(@NotNull World world,
+                                        @NotNull SimpleChunkLocation location,
+                                        @NotNull Collection<SimpleLocation> changes)
+    {
+        TerraformGeneratorPlugin.taskScheduler.execAsyncRegion(world,
+                location.getX(),
+                location.getZ(),
+                () -> {
+                    for (SimpleLocation entry : changes) {
+                        Block target = world.getBlockAt(entry.getX(), entry.getY(), entry.getZ());
+                        BlockData old = target.getBlockData();
+                        target.setType(Material.AIR);
+                        target.setBlockData(old, true);
+                    }
+                });
     }
 
     @Override
@@ -93,14 +98,7 @@ public class PhysicsUpdaterPopulator extends BlockPopulator implements Listener 
 
         if (changes != null) {
             // TerraformGeneratorPlugin.logger.info("[PhysicsUpdaterPopulator] Detected anomalous generation by NMS on " + scl + ". Running repairs on " + changes.size() + " blocks");
-            for (SimpleLocation entry : changes) {
-                Block target = world.getBlockAt(entry.getX(), entry.getY(), entry.getZ());
-                // Set block physics by calling setBlockData
-                // Note that this should not be used for complex blocks.
-                BlockData old = target.getBlockData();
-                target.setType(Material.AIR);
-                target.setBlockData(old, true);
-            }
+            scheduleChanges(world, scl, changes);
         }
     }
 

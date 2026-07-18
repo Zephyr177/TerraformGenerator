@@ -62,15 +62,23 @@ public class NativeGeneratorPatcherPopulator extends BlockPopulator implements L
             }
             Collection<FlushCacheEntry> changes = cache.remove(scl);
             if (changes != null) {
-                TerraformGeneratorPlugin.taskScheduler.execAsyncRegion(w,
-                        scl.getX(), scl.getZ(),
-                        ()->{
-                            for (FlushCacheEntry entry : changes) {
-                                w.getBlockAt(entry.x,entry.y,entry.z).setBlockData(entry.data, false);
-                            }
-                        });
+                scheduleChanges(w, scl, changes);
             }
         }
+    }
+
+    private static void scheduleChanges(@NotNull World world,
+                                        @NotNull SimpleChunkLocation location,
+                                        @NotNull Collection<FlushCacheEntry> changes)
+    {
+        TerraformGeneratorPlugin.taskScheduler.execAsyncRegion(world,
+                location.getX(),
+                location.getZ(),
+                () -> {
+                    for (FlushCacheEntry entry : changes) {
+                        world.getBlockAt(entry.x, entry.y, entry.z).setBlockData(entry.data, false);
+                    }
+                });
     }
 
     //This method uses the deprecated bukkit populate because it comes after the
@@ -85,9 +93,7 @@ public class NativeGeneratorPatcherPopulator extends BlockPopulator implements L
         }
         if (changes != null) {
             // TerraformGeneratorPlugin.logger.info("[NativeGeneratorPatcher] Flushing repairs (" + cache.size() + " chunks), pushed by BlockPopulator");
-            for (FlushCacheEntry entry : changes) {
-                world.getBlockAt(entry.x,entry.y,entry.z).setBlockData(entry.data, false);
-            }
+            scheduleChanges(world, scl, changes);
         }
     }
 
@@ -100,9 +106,7 @@ public class NativeGeneratorPatcherPopulator extends BlockPopulator implements L
         }
         if (changes != null) {
             // TerraformGeneratorPlugin.logger.info("[NativeGeneratorPatcher] Flushing repairs (" + cache.size() + " chunks), pushed by BlockPopulator");
-            for (FlushCacheEntry entry : changes) {
-                event.getChunk().getWorld().getBlockAt(entry.x,entry.y,entry.z).setBlockData(entry.data, false);
-            }
+            scheduleChanges(event.getChunk().getWorld(), scl, changes);
         }
     }
 
