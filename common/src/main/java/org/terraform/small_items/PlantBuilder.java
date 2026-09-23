@@ -9,6 +9,7 @@ import org.terraform.utils.BlockUtils;
 import org.terraform.utils.GenUtils;
 import org.terraform.utils.version.V_1_21_4;
 import org.terraform.utils.version.V_1_21_5;
+import org.terraform.utils.version.V_26_3;
 
 import java.util.Random;
 
@@ -23,6 +24,7 @@ public enum PlantBuilder {
     BROWN_MUSHROOM(Material.BROWN_MUSHROOM),
     RED_MUSHROOM(Material.RED_MUSHROOM),
     GRASS(Material.GRASS),
+    RED_SHRUB(V_26_3.RED_SHRUB),
     SUGAR_CANE(Material.SUGAR_CANE),
     FERN(Material.FERN),
     OAK_LEAVES(Material.OAK_LEAVES),

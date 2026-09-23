@@ -146,7 +146,7 @@ public class PopulatorDataICA extends PopulatorDataICABiomeWriterAbstract {
     }
 
     @Override
-    public void addEntity(int rawX, int rawY, int rawZ, EntityType type) {
+    public void addEntity(float rawX, float rawY, float rawZ, EntityType type) {
         parent.addEntity(rawX, rawY, rawZ, type);
     }
 

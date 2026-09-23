@@ -26,7 +26,7 @@ public class PopulatorDataRecursiveICA extends PopulatorDataPostGen {
     }
 
     /**
-     * @return The PopulatorDataICA related to those coords.
+     * @return The PopulatorDataICA related to those BLOCK coords.
      */
     private @NotNull PopulatorDataICAAbstract getData(int x, int z) {
         SimpleChunkLocation scl = new SimpleChunkLocation(w.getName(), x, z);
@@ -73,8 +73,8 @@ public class PopulatorDataRecursiveICA extends PopulatorDataPostGen {
     }
 
     @Override
-    public void addEntity(int rawX, int rawY, int rawZ, @NotNull EntityType type) {
-        getData(rawX, rawZ).addEntity(rawX, rawY, rawZ, type);
+    public void addEntity(float rawX, float rawY, float rawZ, @NotNull EntityType type) {
+        getData((int)rawX, (int)rawZ).addEntity(rawX, rawY, rawZ, type);
     }
 
     @Override

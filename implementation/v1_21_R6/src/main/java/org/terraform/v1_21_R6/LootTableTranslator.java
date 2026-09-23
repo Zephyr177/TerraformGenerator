@@ -130,6 +130,9 @@ public class LootTableTranslator {
         put(TerraLootTable.TRAIL_RUINS_ARCHAEOLOGY_RARE, BuiltInLootTables.TRAIL_RUINS_ARCHAEOLOGY_RARE);
         put(TerraLootTable.OCEAN_RUIN_WARM_ARCHAEOLOGY, BuiltInLootTables.OCEAN_RUIN_WARM_ARCHAEOLOGY);
         put(TerraLootTable.OCEAN_RUIN_COLD_ARCHAEOLOGY, BuiltInLootTables.OCEAN_RUIN_COLD_ARCHAEOLOGY);
+        put(TerraLootTable.ABANDONED_CAMP_BARREL, BuiltInLootTables.VILLAGE_PLAINS_HOUSE);
+        put(TerraLootTable.ABANDONED_CAMP_COMMON_CHEST, BuiltInLootTables.VILLAGE_SAVANNA_HOUSE);
+        put(TerraLootTable.ABANDONED_CAMP_SECRET_CHEST, BuiltInLootTables.VILLAGE_SAVANNA_HOUSE);
     }};
 
 }

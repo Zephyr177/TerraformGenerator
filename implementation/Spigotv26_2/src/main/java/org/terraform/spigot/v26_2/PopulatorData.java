@@ -1,7 +1,6 @@
 package org.terraform.spigot.v26_2;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.WorldGenLevel;
@@ -29,7 +28,6 @@ import org.terraform.main.config.TConfig;
 import org.terraform.utils.GenUtils;
 
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.Random;
 
@@ -180,8 +178,8 @@ public class PopulatorData extends PopulatorDataAbstract
     }
 
     @Override
-    public void addEntity(int rawX, int rawY, int rawZ, @NotNull org.bukkit.entity.EntityType type) {
-        if (Math.abs((rawX >> 4) - chunkX) > 1 || Math.abs((rawZ >> 4) - chunkZ) > 1) {
+    public void addEntity(float rawX, float rawY, float rawZ, @NotNull org.bukkit.entity.EntityType type) {
+        if (Math.abs((((int)rawX) >> 4) - chunkX) > 1 || Math.abs((((int)rawZ) >> 4) - chunkZ) > 1) {
             TerraformGeneratorPlugin.logger.info("Failed to spawn " + type + " as it was out of bounds.");
             return;
         }

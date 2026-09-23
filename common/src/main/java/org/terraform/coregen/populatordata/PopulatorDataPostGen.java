@@ -122,7 +122,7 @@ public class PopulatorDataPostGen extends PopulatorDataICABiomeWriterAbstract im
     }
 
     @Override
-    public void addEntity(int x, int y, int z, @NotNull EntityType type) {
+    public void addEntity(float x, float y, float z, @NotNull EntityType type) {
         if (w.getDifficulty() == Difficulty.PEACEFUL && isHostileMob(type)) {
             return; // Do not spawn hostile mobs on peaceful servers
         }

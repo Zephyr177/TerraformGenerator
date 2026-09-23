@@ -12,7 +12,7 @@ subprojects {
 		
 		//For spigot local jars
 		mavenLocal()
-		
+4
 		//For SpecialSource
 		maven("https://hub.spigotmc.org/nexus/content/repositories/public/")
         maven("https://repo.codemc.io/repository/nms/")

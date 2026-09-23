@@ -128,6 +128,9 @@ public enum TerraLootTable {
     TRAIL_RUINS_ARCHAEOLOGY_RARE("archaeology/trail_ruins_rare"),
     OCEAN_RUIN_WARM_ARCHAEOLOGY("archaeology/ocean_ruin_warm"),
     OCEAN_RUIN_COLD_ARCHAEOLOGY("archaeology/ocean_ruin_cold"),
+    ABANDONED_CAMP_BARREL("barrels/abandoned_camp_barrel"),
+    ABANDONED_CAMP_COMMON_CHEST("chests/abandoned_camp_common_chest"),
+    ABANDONED_CAMP_SECRET_CHEST("chests/abandoned_camp_secret_chest"),
     ;
 
     @SuppressWarnings("unused")

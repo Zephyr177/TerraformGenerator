@@ -1,6 +1,5 @@
 package org.terraform.coregen.populatordata;
 
-import org.bukkit.Difficulty;
 import org.bukkit.Material;
 import org.bukkit.block.Biome;
 import org.bukkit.block.data.BlockData;
@@ -102,7 +101,7 @@ public abstract class PopulatorDataAbstract {
      */
     public abstract @Nullable Biome getBiome(int rawX, int rawZ);
 
-    public abstract void addEntity(int rawX, int rawY, int rawZ, EntityType type);
+    public abstract void addEntity(float rawX, float rawY, float rawZ, EntityType type);
 
     /**
      * Returns true if the given EntityType is a hostile monster that must not be

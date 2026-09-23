@@ -27,7 +27,6 @@ import org.bukkit.Material;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.craftbukkit.block.CraftBiome;
 import org.bukkit.craftbukkit.block.data.CraftBlockData;
-import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 import org.jetbrains.annotations.NotNull;
 import org.terraform.biome.custombiomes.CustomBiomeType;
 import org.terraform.coregen.NaturalSpawnType;
@@ -39,7 +38,6 @@ import org.terraform.main.TerraformGeneratorPlugin;
 import org.terraform.utils.version.TerraformFieldHandler;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -146,7 +144,7 @@ public class PopulatorDataICA extends PopulatorDataICABiomeWriterAbstract {
     }
 
     @Override
-    public void addEntity(int rawX, int rawY, int rawZ, org.bukkit.entity.EntityType type) {
+    public void addEntity(float rawX, float rawY, float rawZ, org.bukkit.entity.EntityType type) {
         parent.addEntity(rawX, rawY, rawZ, type);
     }
 
