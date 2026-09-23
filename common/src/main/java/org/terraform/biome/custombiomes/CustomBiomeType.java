@@ -1,6 +1,8 @@
 package org.terraform.biome.custombiomes;
 
 import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3f;
+import org.joml.Vector3fc;
 import org.terraform.utils.version.Version;
 
 import java.util.Locale;
@@ -20,6 +22,14 @@ public enum CustomBiomeType {
     private final String skyColor;
     private final String grassColor;
     private String foliageColor;
+    //Store both for compat reasons
+    private final Vector3fc fogColorVec;
+    private final Vector3fc waterColorVec;
+    private final Vector3fc waterFogColorVec;
+
+    private final Vector3fc skyColorVec;
+    private final Vector3fc grassColorVec;
+    private final Vector3fc foliageColorVec;
     private float rainFall = 0.8f;
     private boolean isCold = false;
 
@@ -31,6 +41,13 @@ public enum CustomBiomeType {
         this.skyColor = "";
         this.foliageColor = "";
         this.grassColor = "";
+
+        this.fogColorVec = parseHexColor(fogColor);
+        this.waterColorVec = parseHexColor(waterColor);
+        this.waterFogColorVec = parseHexColor(waterFogColor);
+        this.skyColorVec = parseHexColor(skyColor);
+        this.foliageColorVec = parseHexColor(foliageColor);
+        this.grassColorVec = parseHexColor(grassColor);
     }
 
     CustomBiomeType(String fogColor,
@@ -47,19 +64,61 @@ public enum CustomBiomeType {
         this.skyColor = skyColor;
         this.foliageColor = foliageColor;
         this.grassColor = grassColor;
-        this.rainFall = 0.8f;
+
+        //this.rainFall = 0.8f;
         this.isCold = false;
         // In 1.20, cherry trees no longer need the pink.
         if (Version.VERSION.isAtLeast(Version.v1_20) && this.foliageColor.equals("ffa1fc")) {
             this.foliageColor = "acff96";
         }
 
+        this.fogColorVec = parseHexColor(fogColor);
+        this.waterColorVec = parseHexColor(waterColor);
+        this.waterFogColorVec = parseHexColor(waterFogColor);
+        this.skyColorVec = parseHexColor(skyColor);
+        this.foliageColorVec = parseHexColor(foliageColor);
+        this.grassColorVec = parseHexColor(grassColor);
     }
 
     public @NotNull String getKey() {
         return key;
     }
 
+    private Vector3fc parseHexColor(String col){
+        try{
+            float r = Integer.parseInt(col.substring(0,2), 16)/255f;
+            float g = Integer.parseInt(col.substring(2,4), 16)/255f;
+            float b = Integer.parseInt(col.substring(4,6), 16)/255f;
+            return new Vector3f(r,g,b);
+        }catch(Exception e){
+            return new Vector3f(0,0,0);
+        }
+    }
+
+    public Vector3fc getFogColorVec() {
+        return fogColorVec;
+    }
+
+    public Vector3fc getWaterColorVec() {
+        return waterColorVec;
+    }
+
+    public Vector3fc getSkyColorVec() {
+        return skyColorVec;
+    }
+
+    public Vector3fc getWaterFogColorVec() {
+        return waterFogColorVec;
+    }
+    //Grass colour override used by implementation doesn't use the vector.
+    // Keep this around for now.
+    public Vector3fc getGrassColorVec() {
+        return grassColorVec;
+    }
+
+    public Vector3fc getFoliageColorVec() {
+        return foliageColorVec;
+    }
     public String getFogColor() {
         return fogColor;
     }

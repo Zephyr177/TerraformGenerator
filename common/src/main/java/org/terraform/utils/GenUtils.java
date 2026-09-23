@@ -112,6 +112,19 @@ public class GenUtils {
         };
     }
 
+    public static int randSign(Random rand){
+        return rand.nextInt(2) == 0 ? 1 : -1;
+    }
+    public static CoordPair randomOuterCoords(@NotNull Random rand, CoordPair low, CoordPair high) {
+        if(rand.nextInt(2) == 0){
+            return new CoordPair(randInt(low.x(),high.x()),
+                    rand.nextInt(2) == 0 ? low.z() : high.z());
+        }
+        return new CoordPair(
+                rand.nextInt(2) == 0 ? low.x() : high.x(),
+                randInt(low.z(),high.z()));
+    }
+
     public static boolean chance(@NotNull Random rand, int chance, int outOf) {
         return randInt(rand, 1, outOf) <= chance;
     }
@@ -270,6 +283,10 @@ public class GenUtils {
         return randInt(RANDOMIZER, min, max);
     }
 
+    /**
+     *
+     * @return An INCLUSIVE integer drawn from the range [d,max] via rand
+     */
     public static int randInt(@NotNull Random rand, int d, int max) {
         if (d == max) {
             return d;

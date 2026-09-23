@@ -631,7 +631,7 @@ public class NewFractalTreeBuilder implements Cloneable {
     }
 
     @NotNull
-    NewFractalTreeBuilder setSpawnBees(boolean spawnBees) {
+    public NewFractalTreeBuilder setSpawnBees(boolean spawnBees) {
         this.spawnBees = spawnBees;
         return this;
     }

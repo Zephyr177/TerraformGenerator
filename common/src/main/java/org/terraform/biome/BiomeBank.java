@@ -306,6 +306,11 @@ public enum BiomeBank {
             TConfig.c.BIOME_CHERRYGROVE_WEIGHT
     ),
     TAIGA(new TaigaHandler(), BiomeType.FLAT, BiomeClimate.COLD, TConfig.c.BIOME_TAIGA_WEIGHT),
+    DAPPLED_FOREST(new DappledForestHandler(),
+            BiomeType.FLAT,
+            BiomeClimate.COLD,
+            TConfig.c.BIOME_DAPPLEDFOREST_WEIGHT
+    ),
     SNOWY_TAIGA(new SnowyTaigaHandler(),
             BiomeType.FLAT,
             BiomeClimate.SNOWY,
@@ -353,6 +358,7 @@ public enum BiomeBank {
     MUDFLATS(new MudflatsHandler(), BiomeType.BEACH, BiomeClimate.HUMID_VEGETATION), // Special case, handle later
     CHERRY_GROVE_BEACH(new CherryGroveBeachHandler(), BiomeType.BEACH, BiomeClimate.COLD),
     SCARLET_FOREST_BEACH(new ScarletForestBeachHandler(), BiomeType.BEACH, BiomeClimate.COLD),
+    DAPPLEDFOREST_BEACH(new DappledForestBeachHandler(), BiomeType.BEACH, BiomeClimate.COLD),
     ;
     private static final ConcurrentLRUCache<BiomeSection, BiomeSection> BIOMESECTION_CACHE = new ConcurrentLRUCache<>(
             "BIOMESECTION_CACHE",
@@ -763,7 +769,6 @@ public enum BiomeBank {
     }
 
     public BiomeClimate getClimate() {
-        // TODO Auto-generated method stub
         return climate;
     }
 

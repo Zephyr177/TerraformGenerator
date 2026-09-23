@@ -4,6 +4,8 @@ import org.bukkit.Material;
 
 public class V_1_21_6 {
     public static Material IRON_CHAIN = Version.VERSION.isAtLeast(Version.v1_21_9) ?
-                                  Material.valueOf("IRON_CHAIN") : Material.CHAIN;
+                                        Material.valueOf("IRON_CHAIN") : Material.CHAIN;
+    public static Material OXIDIZED_COPPER_CHEST = Version.VERSION.isAtLeast(Version.v1_21_9) ?
+                                        Material.valueOf("OXIDIZED_COPPER_CHEST") : Material.CHEST;
 
 }

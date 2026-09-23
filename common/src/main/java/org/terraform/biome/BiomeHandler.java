@@ -20,6 +20,7 @@ public abstract class BiomeHandler {
         return CustomBiomeType.NONE;
     }
 
+    //NEVER return Biome.CUSTOM here.
     public abstract Biome getBiome();
 
     // public abstract int getHeight(int x, int z, Random rand);

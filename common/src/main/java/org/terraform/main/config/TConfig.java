@@ -18,9 +18,14 @@ public class TConfig extends YamlFileInterface {
 
     // -=[HEIGHTMAP]=-
     @YamlKey("heightmap.core-frequency")
+    @YamlComment("A higher core frequency causes land height to vary in shorter distance.")
     public float HEIGHT_MAP_CORE_FREQUENCY = 0.003f;
     @YamlKey("heightmap.river-frequency")
+    @YamlComment("A higher frequency means thinner, but closer rivers.")
     public float HEIGHT_MAP_RIVER_FREQUENCY = 0.005f;
+    @YamlKey("heightmap.rivers-enabled")
+    @YamlComment("Set to false to disable rivers entirely.")
+    public boolean HEIGHT_MAP_RIVERS_ENABLED = true;
     @YamlKey("heightmap.land-height-amplifier")
     public float HEIGHT_MAP_LAND_HEIGHT_AMPLIFIER = 1f;
     @YamlKey("heightmap.sea-level")
@@ -299,6 +304,8 @@ public class TConfig extends YamlFileInterface {
     public double BIOME_BADLANDS_PLATEAU_COMMONNESS = 0.18d;
     @YamlKey("biome.taiga.weight")
     public int BIOME_TAIGA_WEIGHT = 6;
+    @YamlKey("biome.dappledforest.weight")
+    public int BIOME_DAPPLEDFOREST_WEIGHT = 3;
     @YamlKey("biome.cherrygrove.weight")
     public int BIOME_CHERRYGROVE_WEIGHT = 3;
     @YamlKey("biome.scarletforest.weight")
@@ -335,6 +342,8 @@ public class TConfig extends YamlFileInterface {
     public boolean TREES_TAIGA_BIG_ENABLED = true;
     @YamlKey("trees.big-forest-trees.enabled")
     public boolean TREES_FOREST_BIG_ENABLED = true;
+    @YamlKey("trees.big-dappledforest-trees.enabled")
+    public boolean TREES_DAPPLEDFOREST_BIG_ENABLED = true;
     @YamlKey("trees.big-savanna-trees.enabled")
     public boolean TREES_SAVANNA_BIG_ENABLED = true;
     @YamlKey("trees.big-birch-trees.enabled")
@@ -514,6 +523,12 @@ public class TConfig extends YamlFileInterface {
     public boolean STRUCTURES_RUINEDPORTAL_ENABLED = true;
     @YamlKey("structures.ruinedportal.count-per-megachunk")
     public int STRUCTURES_RUINEDPORTAL_COUNT_PER_MEGACHUNK = 1;
+    @YamlKey("structures.abandonedcamp.enabled")
+    public boolean STRUCTURES_ABANDONEDCAMP_ENABLED = true;
+    @YamlKey("structures.abandonedcamp.spawnratio")
+    public double STRUCTURES_ABANDONEDCAMP_SPAWNRATIO = 0.7d;
+    @YamlKey("structures.abandonedcamp.count-per-megachunk")
+    public int STRUCTURES_ABANDONEDCAMP_COUNT_PER_MEGACHUNK = 1;
     @YamlKey("structures.igloo.spawnratio")
     public double STRUCTURES_IGLOO_SPAWNRATIO = 0.8d;
     @YamlKey("structures.igloo.enabled")

@@ -25,7 +25,6 @@ import org.terraform.coregen.TerraLootTable;
 import org.terraform.coregen.bukkit.NativeGeneratorPatcherPopulator;
 import org.terraform.coregen.populatordata.IPopulatorDataBaseHeightAccess;
 import org.terraform.coregen.populatordata.PopulatorDataAbstract;
-import org.terraform.data.SimpleChunkLocation;
 import org.terraform.data.TerraformWorld;
 import org.terraform.main.TerraformGeneratorPlugin;
 import org.terraform.main.config.TConfig;
@@ -182,8 +181,8 @@ public class PopulatorData extends PopulatorDataAbstract implements IPopulatorDa
     }
 
     @Override
-    public void addEntity(int rawX, int rawY, int rawZ, EntityType type) {
-        if (Math.abs((rawX >> 4) - chunkX) > 1 || Math.abs((rawZ >> 4) - chunkZ) > 1) {
+    public void addEntity(float rawX, float rawY, float rawZ, EntityType type) {
+        if (Math.abs((((int)rawX) >> 4) - chunkX) > 1 || Math.abs((((int)rawZ) >> 4) - chunkZ) > 1) {
             TerraformGeneratorPlugin.logger.info("Failed to spawn " + type + " as it was out of bounds.");
             return;
         }

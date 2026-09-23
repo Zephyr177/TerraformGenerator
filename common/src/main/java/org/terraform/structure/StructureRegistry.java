@@ -19,6 +19,7 @@ import org.terraform.structure.pyramid.PyramidPopulator;
 import org.terraform.structure.small.DesertWellPopulator;
 import org.terraform.structure.small.WitchHutPopulator;
 import org.terraform.structure.small.buriedtreasure.BuriedTreasurePopulator;
+import org.terraform.structure.small.camp.AbandonedCampPopulator;
 import org.terraform.structure.small.dungeon.SmallDungeonPopulator;
 import org.terraform.structure.small.igloo.IglooPopulator;
 import org.terraform.structure.small.ruinedportal.RuinedPortalPopulator;
@@ -147,6 +148,7 @@ public class StructureRegistry {
         registerStructure(StructureType.SMALL, new IglooPopulator());
         registerStructure(StructureType.SMALL, new DesertWellPopulator());
         registerStructure(StructureType.SMALL, new WitchHutPopulator());
+        registerStructure(StructureType.SMALL, new AbandonedCampPopulator());
     }
 
     /**

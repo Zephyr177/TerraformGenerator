@@ -25,6 +25,7 @@ dependencies {
     implementation(project(":implementation:v1_21_R7"))
     implementation(project(":implementation:v26_1"))
     implementation(project(":implementation:v26_2"))
+    implementation(project(":implementation:v26_3"))
     implementation("com.github.AvarionMC:yaml:1.1.7")
 	
 	if(project.hasProperty("includeSpigot")){
@@ -33,6 +34,7 @@ dependencies {
 		implementation(project(":implementation:Spigotv1_21_R7"))
         implementation(project(":implementation:Spigotv26_1"))
         implementation(project(":implementation:Spigotv26_2"))
+        implementation(project(":implementation:Spigotv26_3"))
 	}
 }
 

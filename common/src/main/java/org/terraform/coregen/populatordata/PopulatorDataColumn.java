@@ -65,7 +65,7 @@ public class PopulatorDataColumn extends PopulatorDataAbstract {
     }
 
     @Override
-    public void addEntity(int rawX, int rawY, int rawZ, EntityType type) {
+    public void addEntity(float rawX, float rawY, float rawZ, EntityType type) {
         if (rawX != constrainX || rawZ != constrainZ) {
             throw new IllegalArgumentException("Column Constraint Write Violation");
         }

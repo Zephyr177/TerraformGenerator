@@ -191,8 +191,8 @@ public class PopulatorData extends PopulatorDataAbstract
     }
 
     @Override
-    public void addEntity(int rawX, int rawY, int rawZ, @NotNull EntityType type) {
-        if (Math.abs((rawX >> 4) - chunkX) > 1 || Math.abs((rawZ >> 4) - chunkZ) > 1) {
+    public void addEntity(float rawX, float rawY, float rawZ, @NotNull EntityType type) {
+        if (Math.abs((((int)rawX) >> 4) - chunkX) > 1 || Math.abs((((int)rawZ) >> 4) - chunkZ) > 1) {
             TerraformGeneratorPlugin.logger.info("Failed to spawn " + type + " as it was out of bounds.");
             return;
         }

@@ -331,7 +331,7 @@ public class BlockUtils {
             PlantBuilder.POTTED_CORNFLOWER,
             PlantBuilder.POTTED_LILY_OF_THE_VALLEY,
             };
-    private static final Material[] CARPETS = {
+    public static final Material[] CARPETS = {
             Material.WHITE_CARPET,
             Material.BLACK_CARPET,
             Material.BLUE_CARPET,
