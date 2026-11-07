@@ -49,13 +49,12 @@ public class TerraSchematic {
     }
 
     public static @NotNull TerraSchematic load(String internalPath, SimpleBlock refPoint) throws FileNotFoundException {
-        // A new object gets created from here. If the path is in the cache,
-        // this object is NOT the one that gets returned. Instead, a clone is
-        // returned, with a new hashmap copy and a (broken) version number.
         TerraSchematic schem = new TerraSchematic(refPoint);
-        if (cache.containsKey(internalPath)) {
-            schem.data = cache.get(internalPath);
-            return schem.clone(refPoint);
+        synchronized (cache) {
+            if (cache.containsKey(internalPath)) {
+                schem.data = cache.get(internalPath);
+                return schem.clone(refPoint);
+            }
         }
 
         boolean wasInDataFolder = false;
@@ -111,11 +110,13 @@ public class TerraSchematic {
 
         // Cache all small schematics that are not in the data folder
         if (schem.data.size() < 100 && !wasInDataFolder) {
-            cache.put(internalPath, schem.data);
+            synchronized (cache) {
+                cache.put(internalPath, new HashMap<>(schem.data));
+            }
         }
         return schem;
-    }
 
+    }
     public @NotNull TerraSchematic clone(SimpleBlock refPoint) {
         TerraSchematic clone = new TerraSchematic(refPoint);
         clone.data = new HashMap<>();

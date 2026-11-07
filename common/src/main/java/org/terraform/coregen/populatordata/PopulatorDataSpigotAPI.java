@@ -14,6 +14,8 @@ import org.bukkit.entity.minecart.StorageMinecart;
 import org.bukkit.generator.LimitedRegion;
 import org.bukkit.loot.Lootable;
 import org.jetbrains.annotations.NotNull;
+import org.bukkit.entity.Entity;
+import org.terraform.coregen.NaturalSpawnType;
 import org.terraform.coregen.TerraLootTable;
 import org.terraform.coregen.bukkit.NativeGeneratorPatcherPopulator;
 import org.terraform.coregen.bukkit.TerraformGenerator;
@@ -25,7 +27,7 @@ import java.lang.reflect.Method;
 import java.util.Random;
 
 public class PopulatorDataSpigotAPI extends PopulatorDataAbstract
-        implements IPopulatorDataBeehiveEditor, IPopulatorDataMinecartSpawner
+        implements IPopulatorDataBeehiveEditor, IPopulatorDataMinecartSpawner, IPopulatorDataStructureEffects
 {
     public final LimitedRegion lr;
     private final TerraformWorld tw;
@@ -87,12 +89,17 @@ public class PopulatorDataSpigotAPI extends PopulatorDataAbstract
 
     @Override
     public void addEntity(float rawX, float rawY, float rawZ, @NotNull EntityType type) {
-        if (!lr.isInRegion((int)rawX, (int)rawY, (int)rawZ)) {
-            TerraformGeneratorPlugin.logger.error("Tried to add entity outside of LR bounds at: "+rawX + "," + rawZ + " from LR centered at chunk " + chunkX + "," + chunkZ);
+        int blockX = (int) Math.floor(rawX);
+        int blockY = (int) Math.floor(rawY);
+        int blockZ = (int) Math.floor(rawZ);
+        if (!lr.isInRegion(blockX, blockY, blockZ)) {
+            TerraformGeneratorPlugin.logger.error("Tried to add entity outside of LR bounds at: "
+                                                   + rawX + "," + rawY + "," + rawZ
+                                                   + " from LR centered at chunk " + chunkX + "," + chunkZ);
             return;
         }
         if (tw.getWorld().getDifficulty() == Difficulty.PEACEFUL && isHostileMob(type)) {
-            return; // Do not spawn hostile mobs on peaceful servers
+            return;
         }
         lr.spawnEntity(new Location(tw.getWorld(), rawX, rawY, rawZ), type);
     }
@@ -167,6 +174,68 @@ public class PopulatorDataSpigotAPI extends PopulatorDataAbstract
                 s.update(true, false);
             }
         }
+    }
+
+    @Override
+    public void editBlockState(int x,
+                               int y,
+                               int z,
+                               boolean force,
+                               boolean applyPhysics,
+                               java.util.function.Consumer<BlockState> editor)
+    {
+        if (!lr.isInRegion(x, y, z)) {
+            throw new IllegalStateException("Block-state edit outside LimitedRegion at " + x + "," + y + "," + z);
+        }
+        BlockState state = lr.getBlockState(x, y, z);
+        editor.accept(state);
+        try {
+            lr.setBlockState(x, y, z, state);
+        }
+        catch (NoSuchMethodError e) {
+            state.update(force, applyPhysics);
+        }
+    }
+
+    @Override
+    public void spawnEntity(double worldX,
+                            double worldY,
+                            double worldZ,
+                            EntityType type,
+                            java.util.function.Consumer<Entity> configure)
+    {
+        if (!lr.isInRegion((int) Math.floor(worldX),
+                (int) Math.floor(worldY),
+                (int) Math.floor(worldZ))) {
+            throw new IllegalStateException("Entity spawn outside LimitedRegion at "
+                                            + worldX + "," + worldY + "," + worldZ);
+        }
+        if (tw.getWorld().getDifficulty() == Difficulty.PEACEFUL && isHostileMob(type)) {
+            return;
+        }
+        Entity entity = lr.spawnEntity(new Location(tw.getWorld(), worldX, worldY, worldZ), type);
+        configure.accept(entity);
+    }
+
+    @Override
+    public void registerNaturalSpawns(NaturalSpawnType type,
+                                      int targetChunkX,
+                                      int targetChunkZ,
+                                      int x0,
+                                      int y0,
+                                      int z0,
+                                      int x1,
+                                      int y1,
+                                      int z1)
+    {
+        if (targetChunkX != chunkX || targetChunkZ != chunkZ) {
+            throw new IllegalStateException("LimitedRegion native spawn registration must target its current chunk");
+        }
+        PopulatorDataICAAbstract nativeData = TerraformGeneratorPlugin.injector.getICAData(this);
+        if (nativeData == null) {
+            throw new IllegalStateException("No native chunk access for LimitedRegion structure effects");
+        }
+        nativeData.registerNaturalSpawns(type, x0, y0, z0, x1, y1, z1);
     }
 
     @Override

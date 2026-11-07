@@ -16,6 +16,8 @@ import org.terraform.data.SimpleLocation;
 import org.terraform.main.TerraformGeneratorPlugin;
 import org.terraform.main.config.TConfig;
 
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 import java.util.*;
 
 public class PhysicsUpdaterPopulator extends BlockPopulator implements Listener {
@@ -70,36 +72,49 @@ public class PhysicsUpdaterPopulator extends BlockPopulator implements Listener 
         }
     }
 
-    private static void scheduleChanges(@NotNull World world,
-                                        @NotNull SimpleChunkLocation location,
-                                        @NotNull Collection<SimpleLocation> changes)
+    private static CompletableFuture<Void> scheduleChanges(@NotNull World world,
+                                                           @NotNull SimpleChunkLocation location,
+                                                           @NotNull Collection<SimpleLocation> changes)
     {
-        TerraformGeneratorPlugin.taskScheduler.execAsyncRegion(world,
+        return DeferredRegionTaskTracker.submit(world,
                 location.getX(),
                 location.getZ(),
-                () -> {
+                checkActive -> {
                     for (SimpleLocation entry : changes) {
+                        checkActive.run();
                         Block target = world.getBlockAt(entry.getX(), entry.getY(), entry.getZ());
                         BlockData old = target.getBlockData();
                         target.setType(Material.AIR);
                         target.setBlockData(old, true);
+                    }
+                }).whenComplete((ignored, failure) -> {
+                    if (failure != null) {
+                        synchronized (cache) {
+                            cache.computeIfAbsent(location, unused -> new ArrayList<>()).addAll(changes);
+                        }
+                        if (!(failure instanceof CancellationException)) {
+                            TerraformGeneratorPlugin.logger.error("Failed to apply deferred physics updates for " + location);
+                            TerraformGeneratorPlugin.logger.stackTrace(failure);
+                        }
                     }
                 });
     }
 
     @Override
     public void populate(@NotNull World world, @NotNull Random random, @NotNull Chunk chunk) {
+        populateAsync(world, chunk);
+    }
+
+    public CompletableFuture<Void> populateAsync(@NotNull World world, @NotNull Chunk chunk) {
         SimpleChunkLocation scl = new SimpleChunkLocation(chunk);
         Collection<SimpleLocation> changes;
-
-        synchronized (cache){
+        synchronized (cache) {
             changes = cache.remove(scl);
         }
-
-        if (changes != null) {
-            // TerraformGeneratorPlugin.logger.info("[PhysicsUpdaterPopulator] Detected anomalous generation by NMS on " + scl + ". Running repairs on " + changes.size() + " blocks");
-            scheduleChanges(world, scl, changes);
+        if (changes == null) {
+            return CompletableFuture.completedFuture(null);
         }
+        return scheduleChanges(world, scl, changes);
     }
 
     @EventHandler

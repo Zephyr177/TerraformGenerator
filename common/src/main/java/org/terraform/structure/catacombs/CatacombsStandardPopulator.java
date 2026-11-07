@@ -1,15 +1,13 @@
 package org.terraform.structure.catacombs;
 
-import org.bukkit.Difficulty;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.data.Bisected.Half;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Skeleton;
 import org.bukkit.inventory.ItemStack;
+import org.terraform.coregen.populatordata.IPopulatorDataStructureEffects;
 import org.jetbrains.annotations.NotNull;
 import org.terraform.coregen.populatordata.PopulatorDataAbstract;
-import org.terraform.coregen.populatordata.PopulatorDataSpigotAPI;
 import org.terraform.data.SimpleBlock;
 import org.terraform.data.Wall;
 import org.terraform.main.config.TConfig;
@@ -131,16 +129,16 @@ public class CatacombsStandardPopulator extends RoomPopulatorAbstract {
             SimpleBlock target = new SimpleBlock(data, coords[0], room.getY() + 1, coords[2]);
             target = target.getAtY(room.getY() + 1);
 
-            if (data instanceof PopulatorDataSpigotAPI
-                && data.getTerraformWorld().getWorld().getDifficulty() != Difficulty.PEACEFUL) {
-                Skeleton e = (Skeleton) ((PopulatorDataSpigotAPI) data).lr
-                        .spawnEntity(new Location(
-                                        Objects.requireNonNull(data.getTerraformWorld()).getWorld(),
-                                        target.getX()+0.5, target.getY()+0.3, target.getZ()+0.5),
-                                EntityType.SKELETON);
-
-                Objects.requireNonNull(e.getEquipment()).setItemInMainHand(new ItemStack(Material.IRON_SWORD));
-                e.setPersistent(true);
+            if (data instanceof IPopulatorDataStructureEffects effects) {
+                effects.spawnEntity(target.getX() + 0.5,
+                        target.getY() + 0.3,
+                        target.getZ() + 0.5,
+                        EntityType.SKELETON,
+                        entity -> {
+                            Skeleton skeleton = (Skeleton) entity;
+                            Objects.requireNonNull(skeleton.getEquipment()).setItemInMainHand(new ItemStack(Material.IRON_SWORD));
+                            skeleton.setPersistent(true);
+                        });
             }
         }
     }

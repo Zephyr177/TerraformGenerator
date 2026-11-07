@@ -6,7 +6,7 @@ import org.bukkit.block.Biome;
 import org.bukkit.block.data.type.SeaPickle;
 import org.jetbrains.annotations.NotNull;
 import org.terraform.biome.cavepopulators.noisecluster.LushNoiseClusterPopulator;
-import org.terraform.coregen.populatordata.PopulatorDataICABiomeWriterAbstract;
+import org.terraform.coregen.populatordata.IPopulatorDataBiomeWriter;
 import org.terraform.data.SimpleBlock;
 import org.terraform.data.TerraformWorld;
 import org.terraform.main.TerraformGeneratorPlugin;
@@ -115,9 +115,17 @@ public class LargeLushCavePopulator extends GenericLargeCavePopulator {
         }
 
         // set biome
-        PopulatorDataICABiomeWriterAbstract biomeWriter = (PopulatorDataICABiomeWriterAbstract) TerraformGeneratorPlugin.injector.getICAData(
-                ceil.getPopData());
-        assert biomeWriter != null;
+        IPopulatorDataBiomeWriter biomeWriter;
+        if (ceil.getPopData() instanceof IPopulatorDataBiomeWriter writer) {
+            biomeWriter = writer;
+        }
+        else {
+            biomeWriter = (IPopulatorDataBiomeWriter) TerraformGeneratorPlugin.injector.getICAData(
+                    ceil.getPopData());
+        }
+        if (biomeWriter == null) {
+            throw new IllegalStateException("Large lush cave requires biome-writer support");
+        }
         for (int ny = floor.getY(); ny <= ceil.getY(); ny++) {
             biomeWriter.setBiome(floor.getX(), ny, floor.getZ(), Biome.LUSH_CAVES);
         }

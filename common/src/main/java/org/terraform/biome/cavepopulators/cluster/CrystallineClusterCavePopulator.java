@@ -6,11 +6,8 @@ import org.bukkit.block.Biome;
 import org.bukkit.block.BlockFace;
 import org.jetbrains.annotations.NotNull;
 import org.terraform.biome.custombiomes.CustomBiomeType;
-import org.terraform.coregen.populatordata.PopulatorDataAbstract;
-import org.terraform.coregen.populatordata.PopulatorDataICABiomeWriterAbstract;
 import org.terraform.data.SimpleBlock;
 import org.terraform.data.TerraformWorld;
-import org.terraform.main.TerraformGeneratorPlugin;
 import org.terraform.utils.BlockUtils;
 import org.terraform.utils.GenUtils;
 import org.terraform.utils.blockdata.DirectionalBuilder;
@@ -96,21 +93,14 @@ public class CrystallineClusterCavePopulator extends AbstractCaveClusterPopulato
             target = target.getUp();
         }
 
-        // =========================
-        // Biome Setter
-        // =========================
-        PopulatorDataAbstract d = TerraformGeneratorPlugin.injector.getICAData(ceil.getPopData());
-        if (d instanceof PopulatorDataICABiomeWriterAbstract data) {
-            while (floor.getY() < ceil.getY()) {
-                data.setBiome(
-                        floor.getX(),
-                        floor.getY(),
-                        floor.getZ(),
-                        CustomBiomeType.CRYSTALLINE_CLUSTER,
-                        Biome.DRIPSTONE_CAVES
-                );
-                floor = floor.getUp();
-            }
+        while (floor.getY() < ceil.getY()) {
+            GenUtils.setBiome(floor.getPopData(),
+                    floor.getX(),
+                    floor.getY(),
+                    floor.getZ(),
+                    CustomBiomeType.CRYSTALLINE_CLUSTER,
+                    Biome.DRIPSTONE_CAVES);
+            floor = floor.getUp();
         }
     }
 

@@ -1,21 +1,17 @@
 package org.terraform.coregen.bukkit;
 
-import org.bukkit.Chunk;
-import org.bukkit.World;
 import org.bukkit.entity.EntityType;
-import org.bukkit.generator.BlockPopulator;
 import org.jetbrains.annotations.NotNull;
 import org.terraform.biome.BiomeBank;
-import org.terraform.coregen.populatordata.PopulatorDataPostGen;
+import org.terraform.coregen.populatordata.PopulatorDataAbstract;
 import org.terraform.data.TerraformWorld;
 import org.terraform.main.config.TConfig;
 import org.terraform.populators.AnimalPopulator;
 import org.terraform.utils.version.V_1_20_5;
 import org.terraform.utils.version.Version;
 
-import java.util.Random;
 
-public class TerraformAnimalPopulator extends BlockPopulator {
+public class TerraformAnimalPopulator {
 
     private static final AnimalPopulator[] ANIMAL_POPULATORS = {
             null, // Slot for goat
@@ -372,17 +368,12 @@ public class TerraformAnimalPopulator extends BlockPopulator {
         }
     }
 
-    @Override
-    public void populate(@NotNull World world, @NotNull Random random, @NotNull Chunk chunk) {
-
-        PopulatorDataPostGen data = new PopulatorDataPostGen(chunk);
-
+    public void populate(@NotNull PopulatorDataAbstract data) {
+        int chunkX = data.getChunkX();
+        int chunkZ = data.getChunkZ();
         for (AnimalPopulator pop : ANIMAL_POPULATORS) {
-            if (pop == null) {
-                continue;
-            }
-            if (pop.canSpawn(tw.getHashedRand(chunk.getX(), pop.hashCode(), chunk.getZ()))) {
-                pop.populate(tw, tw.getHashedRand(chunk.getX(), 111 + pop.hashCode(), chunk.getZ()), data);
+            if (pop != null && pop.canSpawn(tw.getHashedRand(chunkX, pop.hashCode(), chunkZ))) {
+                pop.populate(tw, tw.getHashedRand(chunkX, 111 + pop.hashCode(), chunkZ), data);
             }
         }
     }

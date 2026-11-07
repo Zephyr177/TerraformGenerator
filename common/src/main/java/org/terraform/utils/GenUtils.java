@@ -1,6 +1,7 @@
 package org.terraform.utils;
 
 import org.bukkit.Material;
+import org.bukkit.block.Biome;
 import org.bukkit.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,7 +10,11 @@ import org.terraform.biome.BiomeSection;
 import org.terraform.coregen.ChunkCache;
 import org.terraform.coregen.bukkit.TerraformGenerator;
 import org.terraform.coregen.populatordata.PopulatorDataAbstract;
+import org.terraform.coregen.populatordata.IPopulatorDataGroundHeight;
 import org.terraform.coregen.populatordata.PopulatorDataSpigotAPI;
+import org.terraform.biome.custombiomes.CustomBiomeType;
+import org.terraform.coregen.populatordata.IPopulatorDataBiomeWriter;
+import org.terraform.coregen.populatordata.PopulatorDataICAAbstract;
 import org.terraform.data.CoordPair;
 import org.terraform.data.SimpleBlock;
 import org.terraform.data.SimpleLocation;
@@ -21,8 +26,41 @@ import org.terraform.utils.noise.FastNoise;
 
 import java.util.*;
 
+
 public class GenUtils {
     public static final Random RANDOMIZER = new Random();
+
+    public static @Nullable IPopulatorDataBiomeWriter getBiomeWriter(PopulatorDataAbstract data) {
+        if (data instanceof IPopulatorDataBiomeWriter direct) {
+            return direct;
+        }
+        PopulatorDataICAAbstract nativeData = TerraformGeneratorPlugin.injector.getICAData(data);
+        return nativeData instanceof IPopulatorDataBiomeWriter writer ? writer : null;
+    }
+
+    public static boolean setBiome(PopulatorDataAbstract data,
+                                   int x,
+                                   int y,
+                                   int z,
+                                   CustomBiomeType customBiome,
+                                   Biome fallback)
+    {
+        IPopulatorDataBiomeWriter writer = getBiomeWriter(data);
+        if (writer == null) {
+            return false;
+        }
+        writer.setBiome(x, y, z, customBiome, fallback);
+        return true;
+    }
+
+    public static boolean setBiome(PopulatorDataAbstract data, int x, int y, int z, Biome biome) {
+        IPopulatorDataBiomeWriter writer = getBiomeWriter(data);
+        if (writer == null) {
+            return false;
+        }
+        writer.setBiome(x, y, z, biome);
+        return true;
+    }
     private static final EnumSet<Material> BLACKLIST_HIGHEST_GROUND = EnumSet.noneOf(Material.class);
     public static ConcurrentLRUCache<ChunkCache, EnumSet<BiomeBank>> biomeQueryCache;
 
@@ -428,10 +466,19 @@ public class GenUtils {
      * But you know what? I'm going to cache it anyway.
      */
     public static int getHighestGround(PopulatorDataAbstract data, int x, int z) {
+        if (data instanceof IPopulatorDataGroundHeight groundHeight) {
+            return groundHeight.getHighestGround(x,
+                    z,
+                    TerraformGeneratorPlugin.injector.getMinY(),
+                    TerraformGeneratorPlugin.injector.getMaxY(),
+                    GenUtils::isGroundLike);
+        }
         // If you're too lazy to bother then just do this
         if (data instanceof PopulatorDataSpigotAPI) {
             return getTransformedHeight(data.getTerraformWorld(), x, z);
         }
+
+
 
         int y = TerraformGeneratorPlugin.injector.getMaxY() - 1;
         ChunkCache cache = TerraformGenerator.getCache(data.getTerraformWorld(), x>>4, z>>4);

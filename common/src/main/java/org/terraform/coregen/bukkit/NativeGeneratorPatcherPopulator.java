@@ -15,6 +15,8 @@ import org.terraform.main.TerraformGeneratorPlugin;
 import org.terraform.main.config.TConfig;
 
 import java.util.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 
 public class NativeGeneratorPatcherPopulator extends BlockPopulator implements Listener {
 
@@ -67,16 +69,27 @@ public class NativeGeneratorPatcherPopulator extends BlockPopulator implements L
         }
     }
 
-    private static void scheduleChanges(@NotNull World world,
-                                        @NotNull SimpleChunkLocation location,
-                                        @NotNull Collection<FlushCacheEntry> changes)
+    private static CompletableFuture<Void> scheduleChanges(@NotNull World world,
+                                                           @NotNull SimpleChunkLocation location,
+                                                           @NotNull Collection<FlushCacheEntry> changes)
     {
-        TerraformGeneratorPlugin.taskScheduler.execAsyncRegion(world,
+        return DeferredRegionTaskTracker.submit(world,
                 location.getX(),
                 location.getZ(),
-                () -> {
+                checkActive -> {
                     for (FlushCacheEntry entry : changes) {
+                        checkActive.run();
                         world.getBlockAt(entry.x, entry.y, entry.z).setBlockData(entry.data, false);
+                    }
+                }).whenComplete((ignored, failure) -> {
+                    if (failure != null) {
+                        synchronized (cache) {
+                            cache.computeIfAbsent(location, unused -> new ArrayList<>()).addAll(changes);
+                        }
+                        if (!(failure instanceof CancellationException)) {
+                            TerraformGeneratorPlugin.logger.error("Failed to flush deferred block changes for " + location);
+                            TerraformGeneratorPlugin.logger.stackTrace(failure);
+                        }
                     }
                 });
     }
@@ -85,16 +98,19 @@ public class NativeGeneratorPatcherPopulator extends BlockPopulator implements L
     // normal API's populate
     @Override
     public void populate(@NotNull World world, @NotNull Random random, @NotNull Chunk chunk) {
+        populateAsync(world, chunk);
+    }
 
+    public CompletableFuture<Void> populateAsync(@NotNull World world, @NotNull Chunk chunk) {
         SimpleChunkLocation scl = new SimpleChunkLocation(chunk);
         Collection<FlushCacheEntry> changes;
-        synchronized (cache){
+        synchronized (cache) {
             changes = cache.remove(scl);
         }
-        if (changes != null) {
-            // TerraformGeneratorPlugin.logger.info("[NativeGeneratorPatcher] Flushing repairs (" + cache.size() + " chunks), pushed by BlockPopulator");
-            scheduleChanges(world, scl, changes);
+        if (changes == null) {
+            return CompletableFuture.completedFuture(null);
         }
+        return scheduleChanges(world, scl, changes);
     }
 
     @EventHandler

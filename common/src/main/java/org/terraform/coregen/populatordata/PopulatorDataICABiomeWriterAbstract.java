@@ -5,7 +5,9 @@ import org.jetbrains.annotations.NotNull;
 import org.terraform.biome.BiomeBank;
 import org.terraform.biome.custombiomes.CustomBiomeType;
 
-public abstract class PopulatorDataICABiomeWriterAbstract extends PopulatorDataICAAbstract {
+public abstract class PopulatorDataICABiomeWriterAbstract extends PopulatorDataICAAbstract
+        implements IPopulatorDataBiomeWriter
+{
 
     public abstract void setBiome(int rawX, int rawY, int rawZ, CustomBiomeType cbt, Biome fallback);
 

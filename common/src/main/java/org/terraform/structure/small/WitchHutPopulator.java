@@ -12,6 +12,7 @@ import org.terraform.coregen.NaturalSpawnType;
 import org.terraform.coregen.TerraLootTable;
 import org.terraform.coregen.bukkit.TerraformGenerator;
 import org.terraform.coregen.populatordata.PopulatorDataAbstract;
+import org.terraform.coregen.populatordata.IPopulatorDataStructureEffects;
 import org.terraform.data.MegaChunk;
 import org.terraform.data.SimpleBlock;
 import org.terraform.data.TerraformWorld;
@@ -27,7 +28,6 @@ import org.terraform.utils.GenUtils;
 import java.io.FileNotFoundException;
 import java.util.EnumSet;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Random;
 
 public class WitchHutPopulator extends MultiMegaChunkStructurePopulator {
@@ -91,18 +91,18 @@ public class WitchHutPopulator extends MultiMegaChunkStructurePopulator {
             TerraformGeneratorPlugin.logger.stackTrace(e);
         }
 
-        //Register this as a swamp hut with custom spawns
-        //7x7x9 (x,y,z)
-        Objects.requireNonNull(TerraformGeneratorPlugin.injector.getICAData(data))
-               .registerNaturalSpawns(
-                NaturalSpawnType.WITCH,
+        if (!(data instanceof IPopulatorDataStructureEffects effects)) {
+            throw new IllegalStateException("Witch hut generation requires structure effect support");
+        }
+        effects.registerNaturalSpawns(NaturalSpawnType.WITCH,
+                data.getChunkX(),
+                data.getChunkZ(),
                 x - 3,
-                    y,
+                y,
                 z - 4,
                 x + 3,
                 y + 7,
-                z + 4
-            );
+                z + 4);
 
     }
 

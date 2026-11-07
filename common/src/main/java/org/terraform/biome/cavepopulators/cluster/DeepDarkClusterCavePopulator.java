@@ -7,10 +7,8 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.MultipleFacing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.terraform.coregen.populatordata.PopulatorDataICABiomeWriterAbstract;
 import org.terraform.data.SimpleBlock;
 import org.terraform.data.TerraformWorld;
-import org.terraform.main.TerraformGeneratorPlugin;
 import org.terraform.utils.BlockUtils;
 import org.terraform.utils.GenUtils;
 import org.terraform.utils.blockdata.MultipleFacingBuilder;
@@ -130,14 +128,9 @@ public class DeepDarkClusterCavePopulator extends AbstractCaveClusterPopulator {
             target = target.getUp();
         }
 
-        // =========================
-        // Biome Setter
-        // =========================
-        if (TerraformGeneratorPlugin.injector.getICAData(ceil.getPopData()) instanceof PopulatorDataICABiomeWriterAbstract data) {
-            while (floor.getY() < ceil.getY()) {
-                data.setBiome(floor.getX(), floor.getY(), floor.getZ(), V_1_19.DEEP_DARK);
-                floor = floor.getUp();
-            }
+        while (floor.getY() < ceil.getY()) {
+            GenUtils.setBiome(floor.getPopData(), floor.getX(), floor.getY(), floor.getZ(), V_1_19.DEEP_DARK);
+            floor = floor.getUp();
         }
     }
 

@@ -5,10 +5,8 @@ import org.bukkit.Tag;
 import org.bukkit.block.Biome;
 import org.bukkit.block.BlockFace;
 import org.jetbrains.annotations.NotNull;
-import org.terraform.coregen.populatordata.PopulatorDataICABiomeWriterAbstract;
 import org.terraform.data.SimpleBlock;
 import org.terraform.data.TerraformWorld;
-import org.terraform.main.TerraformGeneratorPlugin;
 import org.terraform.main.config.TConfig;
 import org.terraform.small_items.PlantBuilder;
 import org.terraform.tree.TreeDB;
@@ -237,14 +235,9 @@ public class LushNoiseClusterPopulator extends AbstractNoiseClusterPopulator{
             }
         }
 
-        // =========================
-        // Biome Setter
-        // =========================
-        if (TerraformGeneratorPlugin.injector.getICAData(ceil.getPopData()) instanceof PopulatorDataICABiomeWriterAbstract data) {
-            while (floor.getY() < ceil.getY()) {
-                data.setBiome(floor.getX(), floor.getY(), floor.getZ(), Biome.LUSH_CAVES);
-                floor = floor.getUp();
-            }
+        while (floor.getY() < ceil.getY()) {
+            GenUtils.setBiome(floor.getPopData(), floor.getX(), floor.getY(), floor.getZ(), Biome.LUSH_CAVES);
+            floor = floor.getUp();
         }
     }
 

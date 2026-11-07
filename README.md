@@ -60,6 +60,8 @@ that has strict requirements, because as of now, I am in mandatory National serv
 There are commands, but they are developer commands and only available via /op. Try not to use them unless you
 understand what they do.
 
+On region-thread servers, large structures are placed through the owning world regions. Their blocks, entities, and loot may become visible progressively after structure generation starts.
+
 On another note, for 1.15.2, the version released on 23rd Feb 2020 is the recommended version, as it fixes an itchy
 spigot issue. More details at the bottom under "bugs". 1.14.4 does not have this fix.
 

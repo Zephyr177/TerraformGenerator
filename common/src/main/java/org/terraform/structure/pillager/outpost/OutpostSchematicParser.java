@@ -2,13 +2,12 @@ package org.terraform.structure.pillager.outpost;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.block.Banner;
 import org.bukkit.block.data.BlockData;
 import org.jetbrains.annotations.NotNull;
 import org.terraform.biome.BiomeBank;
 import org.terraform.coregen.TerraLootTable;
 import org.terraform.coregen.populatordata.PopulatorDataAbstract;
-import org.terraform.coregen.populatordata.PopulatorDataPostGen;
+import org.terraform.coregen.populatordata.IPopulatorDataStructureEffects;
 import org.terraform.data.SimpleBlock;
 import org.terraform.data.Wall;
 import org.terraform.schematic.SchematicParser;
@@ -97,14 +96,11 @@ public class OutpostSchematicParser extends SchematicParser {
         else if (data.getMaterial() == Material.WHITE_WALL_BANNER || data.getMaterial() == Material.WHITE_BANNER) {
             // Set it first to make the target block a banner
             super.applyData(block, data);
-            if (block.getPopData() instanceof PopulatorDataPostGen) {
-                // org.bukkit.block.Banner;
-                Banner banner = (Banner) ((PopulatorDataPostGen) block.getPopData()).getBlockState(block.getX(),
-                        block.getY(),
-                        block.getZ());
-                banner.setPatterns(BannerUtils.getOminousBannerPatterns());
-                banner.update();
+            if (!(block.getPopData() instanceof IPopulatorDataStructureEffects effects)) {
+                throw new IllegalStateException("Outpost banner requires structure effect support");
             }
+            effects.editBlockState(block.getX(), block.getY(), block.getZ(), true, false, state ->
+                    ((org.bukkit.block.Banner) state).setPatterns(BannerUtils.getOminousBannerPatterns()));
         }
         else {
             super.applyData(block, data);

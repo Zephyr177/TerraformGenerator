@@ -3,10 +3,8 @@ package org.terraform.biome.cavepopulators.noisecluster;
 import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
 import org.jetbrains.annotations.NotNull;
-import org.terraform.coregen.populatordata.PopulatorDataICABiomeWriterAbstract;
 import org.terraform.data.SimpleBlock;
 import org.terraform.data.TerraformWorld;
-import org.terraform.main.TerraformGeneratorPlugin;
 import org.terraform.main.config.TConfig;
 import org.terraform.utils.BlockUtils;
 import org.terraform.utils.GenUtils;
@@ -108,16 +106,10 @@ public class SulfurNoiseClusterPopulator extends AbstractNoiseClusterPopulator{
             target = target.getUp();
         }
 
-        // =========================
-        // Biome Setter
-        // =========================
-        if (TerraformGeneratorPlugin.injector.getICAData(ceil.getPopData()) instanceof PopulatorDataICABiomeWriterAbstract data) {
-            while (floor.getY() < ceil.getY()) {
-                data.setBiome(floor.getX(), floor.getY(), floor.getZ(), V_26_2.SULFUR_CAVES);
-                floor = floor.getUp();
-            }
+        while (floor.getY() < ceil.getY()) {
+            GenUtils.setBiome(floor.getPopData(), floor.getX(), floor.getY(), floor.getZ(), V_26_2.SULFUR_CAVES);
+            floor = floor.getUp();
         }
-
         // =========================
         // Surface vents
         // =========================

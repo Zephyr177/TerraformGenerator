@@ -211,6 +211,16 @@ public class TerraformPopulator extends BlockPopulator {
     }
 
     public void populate(@NotNull TerraformWorld tw, @NotNull PopulatorDataAbstract data) {
+        populate(tw, data, true);
+    }
+
+    public void populateRepair(@NotNull TerraformWorld tw, @NotNull PopulatorDataAbstract data) {
+        populate(tw, data, false);
+    }
+
+    private void populate(@NotNull TerraformWorld tw,
+                          @NotNull PopulatorDataAbstract data,
+                          boolean includePositiveChunkBoundary) {
         Random random = tw.getHashedRand(571162, data.getChunkX(), data.getChunkZ());
 
         // ores
@@ -228,8 +238,12 @@ public class TerraformPopulator extends BlockPopulator {
             amethystGeodePopulator.populate(tw, random, data);
 
         // Small Populators run per block.
-        for (int rawX = data.getChunkX() * 16; rawX <= data.getChunkX() * 16 + 16; rawX++) {
-            for (int rawZ = data.getChunkZ() * 16; rawZ <= data.getChunkZ() * 16 + 16; rawZ++) {
+        int chunkStartX = data.getChunkX() * 16;
+        int chunkStartZ = data.getChunkZ() * 16;
+        int chunkEndX = chunkStartX + 16 + (includePositiveChunkBoundary ? 1 : 0);
+        int chunkEndZ = chunkStartZ + 16 + (includePositiveChunkBoundary ? 1 : 0);
+        for (int rawX = chunkStartX; rawX < chunkEndX; rawX++) {
+            for (int rawZ = chunkStartZ; rawZ < chunkEndZ; rawZ++) {
                 int surfaceY = GenUtils.getTransformedHeight(data.getTerraformWorld(), rawX, rawZ);
                 BiomeBank bank = tw.getBiomeBank(rawX, surfaceY, rawZ);
                 banks.add(bank);

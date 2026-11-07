@@ -16,12 +16,12 @@ import org.terraform.structure.room.RoomLayoutGenerator;
 import org.terraform.utils.GenUtils;
 import org.terraform.utils.MazeSpawner;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Random;
 
 public class StrongholdPopulator extends SingleMegaChunkStructurePopulator {
     private static boolean debugSpawnMessage = false;
-    private static final HashMap<TerraformWorld,CoordPair[]> POSITIONS = new HashMap<>();
+    private static final ConcurrentHashMap<TerraformWorld, CoordPair[]> POSITIONS = new ConcurrentHashMap<>();
 
     /**
      * @return x, z coords on the circumference of

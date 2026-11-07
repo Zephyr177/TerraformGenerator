@@ -8,6 +8,7 @@ import org.bukkit.generator.WorldInfo;
 import org.jetbrains.annotations.NotNull;
 import org.terraform.data.TerraformWorld;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.Random;
 
 /**
@@ -35,15 +36,14 @@ public class TerraformBukkitBlockPopulator extends BlockPopulator {
 
     @Override
     public void populate(@NotNull World world, @NotNull Random random, @NotNull Chunk chunk) {
-        // Run the fixers first
-        this.nativePatcherPopulator.populate(world, random, chunk);
-        this.physicsUpdaterPopulator.populate(world, random, chunk);
-
-        // Populate structures next
-        this.structurePopulator.populate(world, random, chunk);
-
-        // Populate animals last
-        this.animalPopulator.populate(world, random, chunk);
+        CompletableFuture<Void> patcher = this.nativePatcherPopulator.populateAsync(world, chunk);
+        patcher.handle((ignored, failure) -> null)
+                .thenCompose(ignored -> this.physicsUpdaterPopulator.populateAsync(world, chunk)
+                        .handle((physicsIgnored, failure) -> null))
+                .whenComplete((ignored, failure) -> this.structurePopulator.populate(world,
+                        random,
+                        chunk,
+                        this.animalPopulator::populate));
     }
 
     @Override

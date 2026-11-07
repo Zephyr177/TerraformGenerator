@@ -1,13 +1,12 @@
 package org.terraform.utils;
 
 import org.bukkit.Art;
-import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Painting;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.terraform.coregen.populatordata.PopulatorDataPostGen;
+import org.terraform.coregen.populatordata.IPopulatorDataStructureEffects;
 import org.terraform.data.SimpleBlock;
 
 import java.util.Random;
@@ -15,23 +14,19 @@ import java.util.Random;
 public class PaintingUtils {
 
     public static void placePainting(@NotNull SimpleBlock target, @NotNull BlockFace facing, @NotNull Art art) {
-        if (target.getPopData() instanceof PopulatorDataPostGen) {
-            try {
-                PopulatorDataPostGen postGen = ((PopulatorDataPostGen) target.getPopData());
-                Painting painting = (Painting) postGen.getWorld()
-                                                      .spawnEntity(new Location(postGen.getWorld(),
-                                                              target.getX(),
-                                                              target.getY(),
-                                                              target.getZ()
-                                                      ), EntityType.PAINTING);
+        if (!(target.getPopData() instanceof IPopulatorDataStructureEffects effects)) {
+            return;
+        }
+        try {
+            effects.spawnEntity(target.getX(), target.getY(), target.getZ(), EntityType.PAINTING, entity -> {
+                Painting painting = (Painting) entity;
                 painting.setFacingDirection(facing);
                 painting.setPersistent(true);
                 painting.setArt(art);
-            }
-            catch (IllegalArgumentException e) {
-                // TerraformGeneratorPlugin.TerraformGeneratorPlugin.logger.stackTrace(e);
-                // Area is occupied by another entity. Fail silently.
-            }
+            });
+        }
+        catch (IllegalArgumentException ignored) {
+            // Painting placement fails when another entity occupies the surface.
         }
     }
 

@@ -22,20 +22,36 @@ import org.terraform.main.config.TConfig;
 
 import java.util.Random;
 
-public class PopulatorDataPostGen extends PopulatorDataICABiomeWriterAbstract implements IPopulatorDataPhysicsCapable {
+public class PopulatorDataPostGen extends PopulatorDataICABiomeWriterAbstract
+        implements IPopulatorDataPhysicsCapable, IPopulatorDataStructureEffects
+{
     private static int spawnerRetries = 0;
     private final @NotNull World w;
     private final @NotNull Chunk c;
 
+    private static final Runnable NO_CANCELLATION = () -> {};
+    private final Runnable cancellationCheck;
+
     public PopulatorDataPostGen(@NotNull Chunk c) {
+        this(c, NO_CANCELLATION);
+    }
+
+    public PopulatorDataPostGen(@NotNull Chunk c, @NotNull Runnable cancellationCheck) {
         this.w = c.getWorld();
         this.c = c;
+        this.cancellationCheck = cancellationCheck;
     }
+
+    private void checkActive() {
+        cancellationCheck.run();
+    }
+
 
     /**
      * @return the w
      */
     public @NotNull World getWorld() {
+        checkActive();
         return w;
     }
 
@@ -43,21 +59,25 @@ public class PopulatorDataPostGen extends PopulatorDataICABiomeWriterAbstract im
      * @return the c
      */
     public @NotNull Chunk getChunk() {
+        checkActive();
         return c;
     }
 
     @Override
     public @NotNull Material getType(int x, int y, int z) {
+        checkActive();
         return w.getBlockAt(x, y, z).getType();
     }
 
     @Override
     public @Nullable BlockData getBlockData(int x, int y, int z) {
+        checkActive();
         return w.getBlockAt(x, y, z).getBlockData();
     }
 
     @Override
     public void setType(int x, int y, int z, @NotNull Material type) {
+        checkActive();
         boolean isFragile = Tag.DOORS.isTagged(type)
                             || Tag.CARPETS.isTagged(type)
                             || type == Material.FARMLAND
@@ -68,6 +88,7 @@ public class PopulatorDataPostGen extends PopulatorDataICABiomeWriterAbstract im
 
     @Override
     public void setBlockData(int x, int y, int z, @NotNull BlockData data) {
+        checkActive();
         boolean isFragile = Tag.DOORS.isTagged(data.getMaterial())
                             || Tag.CARPETS.isTagged(data.getMaterial())
                             || data.getMaterial() == Material.FARMLAND
@@ -78,12 +99,14 @@ public class PopulatorDataPostGen extends PopulatorDataICABiomeWriterAbstract im
 
     @Override
     public void setType(int x, int y, int z, @NotNull Material type, boolean updatePhysics) {
+        checkActive();
         Block b = w.getBlockAt(x, y, z);
         b.setType(type, updatePhysics);
     }
 
     @Override
     public void setBlockData(int x, int y, int z, @NotNull BlockData data, boolean updatePhysics) {
+        checkActive();
         Block b = w.getBlockAt(x, y, z);
         b.setBlockData(data.clone(), updatePhysics);
     }
@@ -92,22 +115,26 @@ public class PopulatorDataPostGen extends PopulatorDataICABiomeWriterAbstract im
      * Blockstates are mutable, so just edit them. There is no method to directly set them.
      */
     public @NotNull BlockState getBlockState(int x, int y, int z) {
+        checkActive();
         Block b = w.getBlockAt(x, y, z);
         return b.getState();
     }
 
     public void noPhysicsUpdateForce(int x, int y, int z, @NotNull BlockData data) {
+        checkActive();
         Block b = w.getBlockAt(x, y, z);
         b.setBlockData(data.clone(), false);
     }
 
     @Override
     public @Nullable Biome getBiome(int rawX, int rawZ) {
+        checkActive();
         return w.getBlockAt(rawX, TerraformGenerator.seaLevel, rawZ).getBiome();
     }
 
     @Override
     public void setBiome(int rawX, int rawY, int rawZ, @NotNull Biome biome) {
+        checkActive();
         w.setBiome(rawX, rawY, rawZ, biome);
     }
 
@@ -123,6 +150,7 @@ public class PopulatorDataPostGen extends PopulatorDataICABiomeWriterAbstract im
 
     @Override
     public void addEntity(float x, float y, float z, @NotNull EntityType type) {
+        checkActive();
         if (w.getDifficulty() == Difficulty.PEACEFUL && isHostileMob(type)) {
             return; // Do not spawn hostile mobs on peaceful servers
         }
@@ -137,6 +165,7 @@ public class PopulatorDataPostGen extends PopulatorDataICABiomeWriterAbstract im
 
     @Override
     public void setSpawner(int rawX, int rawY, int rawZ, @NotNull EntityType type) {
+        checkActive();
         if (!TConfig.c.FEATURE_SPAWNERS_ENABLED) {
             return;
         }
@@ -169,12 +198,59 @@ public class PopulatorDataPostGen extends PopulatorDataICABiomeWriterAbstract im
     }
 
     @Override
+    public void editBlockState(int x,
+                               int y,
+                               int z,
+                               boolean force,
+                               boolean applyPhysics,
+                               java.util.function.Consumer<BlockState> editor)
+    {
+        checkActive();
+        BlockState state = w.getBlockAt(x, y, z).getState();
+        editor.accept(state);
+        state.update(force, applyPhysics);
+    }
+
+    @Override
+    public void spawnEntity(double worldX,
+                            double worldY,
+                            double worldZ,
+                            @NotNull EntityType type,
+                            java.util.function.Consumer<Entity> configure)
+    {
+        checkActive();
+        if (w.getDifficulty() == Difficulty.PEACEFUL && isHostileMob(type)) {
+            return;
+        }
+        Entity entity = w.spawnEntity(new Location(w, worldX, worldY, worldZ), type);
+        configure.accept(entity);
+    }
+
+    @Override
+    public void registerNaturalSpawns(NaturalSpawnType type,
+                                      int targetChunkX,
+                                      int targetChunkZ,
+                                      int x0,
+                                      int y0,
+                                      int z0,
+                                      int x1,
+                                      int y1,
+                                      int z1)
+    {
+        checkActive();
+        TerraformGeneratorPlugin.injector.getICAData(w.getChunkAt(targetChunkX, targetChunkZ))
+                .registerNaturalSpawns(type, x0, y0, z0, x1, y1, z1);
+    }
+
+    @Override
     public void lootTableChest(int x, int y, int z, TerraLootTable table) {
+        checkActive();
         TerraformGeneratorPlugin.injector.getICAData(w.getBlockAt(x, y, z).getChunk()).lootTableChest(x, y, z, table);
     }
 
     @Override
     public @NotNull TerraformWorld getTerraformWorld() {
+        checkActive();
         return TerraformWorld.get(w);
     }
 
@@ -186,6 +262,7 @@ public class PopulatorDataPostGen extends PopulatorDataICABiomeWriterAbstract im
 
     @Override
     public void setBiome(int rawX, int rawY, int rawZ, CustomBiomeType cbt, Biome fallback) {
+        checkActive();
         PopulatorDataICAAbstract icad = TerraformGeneratorPlugin.injector.getICAData(w.getBlockAt(rawX, rawY, rawZ)
                                                                                       .getChunk());
         if (icad instanceof PopulatorDataICABiomeWriterAbstract biomeWriter) {
@@ -195,6 +272,7 @@ public class PopulatorDataPostGen extends PopulatorDataICABiomeWriterAbstract im
 
     @Override
     public void registerNaturalSpawns(NaturalSpawnType type, int x0, int y0, int z0, int x1, int y1, int z1) {
+        checkActive();
         PopulatorDataICAAbstract icad = TerraformGeneratorPlugin.injector.getICAData(w.getBlockAt(x0, y0, z0)
                                                                                       .getChunk());
         if (icad instanceof PopulatorDataICABiomeWriterAbstract) {
@@ -204,6 +282,7 @@ public class PopulatorDataPostGen extends PopulatorDataICABiomeWriterAbstract im
 
     @Override
     public void spawnMinecartWithChest(int x, int y, int z, TerraLootTable table, Random random) {
+        checkActive();
         PopulatorDataICAAbstract icad = TerraformGeneratorPlugin.injector.getICAData(w.getBlockAt(x, y, z).getChunk());
         if (icad instanceof PopulatorDataICABiomeWriterAbstract) {
             icad.spawnMinecartWithChest(x, y, z, table, random);

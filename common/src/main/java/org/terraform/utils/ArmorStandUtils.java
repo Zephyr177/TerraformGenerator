@@ -1,13 +1,12 @@
 package org.terraform.utils;
 
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
-import org.terraform.coregen.populatordata.PopulatorDataPostGen;
+import org.terraform.coregen.populatordata.IPopulatorDataStructureEffects;
 import org.terraform.data.SimpleBlock;
 
 import java.util.Random;
@@ -22,13 +21,16 @@ public class ArmorStandUtils {
                                        @NotNull BlockFace facing,
                                        @NotNull ArmorStandQuality quality)
     {
-        if (target.getPopData() instanceof PopulatorDataPostGen postGen) {
-            ArmorStand stand = (ArmorStand) postGen.getWorld().spawnEntity(new Location(postGen.getWorld(),
-
-                    target.getX() + 0.5f, target.getY(), target.getZ() + 0.5f
-            ), EntityType.ARMOR_STAND);
-            stand.setRotation(BlockUtils.yawFromBlockFace(facing), 0);
-            quality.apply(stand);
+        if (target.getPopData() instanceof IPopulatorDataStructureEffects effects) {
+            effects.spawnEntity(target.getX() + 0.5,
+                    target.getY(),
+                    target.getZ() + 0.5,
+                    EntityType.ARMOR_STAND,
+                    entity -> {
+                        ArmorStand stand = (ArmorStand) entity;
+                        stand.setRotation(BlockUtils.yawFromBlockFace(facing), 0);
+                        quality.apply(stand);
+                    });
         }
     }
 

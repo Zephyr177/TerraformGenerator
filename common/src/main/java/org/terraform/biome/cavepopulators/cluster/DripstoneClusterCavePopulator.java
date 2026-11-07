@@ -4,10 +4,8 @@ import org.bukkit.Material;
 import org.bukkit.Tag;
 import org.bukkit.block.Biome;
 import org.jetbrains.annotations.NotNull;
-import org.terraform.coregen.populatordata.PopulatorDataICABiomeWriterAbstract;
 import org.terraform.data.SimpleBlock;
 import org.terraform.data.TerraformWorld;
-import org.terraform.main.TerraformGeneratorPlugin;
 import org.terraform.utils.BlockUtils;
 import org.terraform.utils.GenUtils;
 
@@ -72,14 +70,9 @@ public class DripstoneClusterCavePopulator extends AbstractCaveClusterPopulator 
             BlockUtils.upLPointedDripstone(GenUtils.randInt(1, h), floor.getUp());
         }
 
-        // =========================
-        // Biome Setter
-        // =========================
-        if (TerraformGeneratorPlugin.injector.getICAData(ceil.getPopData()) instanceof PopulatorDataICABiomeWriterAbstract data) {
-            while (floor.getY() < ceil.getY()) {
-                data.setBiome(floor.getX(), floor.getY(), floor.getZ(), Biome.DRIPSTONE_CAVES);
-                floor = floor.getUp();
-            }
+        while (floor.getY() < ceil.getY()) {
+            GenUtils.setBiome(floor.getPopData(), floor.getX(), floor.getY(), floor.getZ(), Biome.DRIPSTONE_CAVES);
+            floor = floor.getUp();
         }
     }
 

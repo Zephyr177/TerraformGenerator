@@ -3,7 +3,7 @@ package org.terraform.structure.ancientcity;
 import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
 import org.terraform.coregen.populatordata.PopulatorDataAbstract;
-import org.terraform.coregen.populatordata.PopulatorDataICABiomeWriterAbstract;
+import org.terraform.coregen.populatordata.IPopulatorDataBiomeWriter;
 import org.terraform.data.SimpleBlock;
 import org.terraform.data.SimpleLocation;
 import org.terraform.main.TerraformGeneratorPlugin;
@@ -38,8 +38,16 @@ public class AncientCityBFSCarver extends RoomCarver {
     @Override
     public void carveRoom(PopulatorDataAbstract data, CubeRoom room, Material... wallMaterial) {
         Random rand = data.getTerraformWorld().getHashedRand(room.getX(), room.getY(), room.getZ());
-        PopulatorDataICABiomeWriterAbstract ica = (PopulatorDataICABiomeWriterAbstract) TerraformGeneratorPlugin.injector.getICAData(data);
-        assert ica != null;
+        IPopulatorDataBiomeWriter biomeWriter;
+        if (data instanceof IPopulatorDataBiomeWriter writer) {
+            biomeWriter = writer;
+        }
+        else {
+            biomeWriter = (IPopulatorDataBiomeWriter) TerraformGeneratorPlugin.injector.getICAData(data);
+        }
+        if (biomeWriter == null) {
+            throw new IllegalStateException("Ancient city carving requires biome-writer support");
+        }
         FastNoise circleNoise = NoiseCacheHandler.getNoise(data.getTerraformWorld(), NoiseCacheHandler.NoiseCacheEntry.STRUCTURE_ANCIENTCITY_HOLE, world -> {
             FastNoise n = new FastNoise((int) (world.getSeed() ^ 14423311));
             n.SetNoiseType(FastNoise.NoiseType.Simplex);
@@ -71,7 +79,7 @@ public class AncientCityBFSCarver extends RoomCarver {
         while(!bfsQueue.isEmpty())
         {
             SimpleBlock target = bfsQueue.remove();
-            ica.setBiome(target.getX(), target.getY(), target.getZ(), V_1_19.DEEP_DARK);
+            biomeWriter.setBiome(target.getX(), target.getY(), target.getZ(), V_1_19.DEEP_DARK);
             boolean hasCorner = false;
             for(BlockFace face: BlockUtils.sixBlockFaces) {
                 SimpleBlock rel = target.getRelative(face);

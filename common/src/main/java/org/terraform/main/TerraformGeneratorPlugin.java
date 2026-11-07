@@ -5,8 +5,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.WorldInitEvent;
-import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
+import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -15,11 +15,12 @@ import org.terraform.coregen.ChunkCache;
 import org.terraform.coregen.HeightMap;
 import org.terraform.coregen.NMSInjectorAbstract;
 import org.terraform.coregen.TerraformPopulator;
+import org.terraform.coregen.bukkit.DeferredRegionTaskTracker;
 import org.terraform.coregen.bukkit.TerraformGenerator;
+import org.terraform.coregen.bukkit.StructureGenerationService;
 import org.terraform.coregen.folia.AbstractScheduler;
 import org.terraform.coregen.folia.SpigotScheduler;
 import org.terraform.coregen.folia.FoliaScheduler;
-import org.terraform.coregen.populatordata.PopulatorDataPostGen;
 import org.terraform.data.SimpleChunkLocation;
 import org.terraform.data.TerraformWorld;
 import org.terraform.main.config.TConfig;
@@ -42,13 +43,13 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class TerraformGeneratorPlugin extends JavaPlugin implements Listener {
 
     public static AbstractScheduler taskScheduler;
-    public static final Set<String> INJECTED_WORLDS = new HashSet<>();
+    public static final Set<String> INJECTED_WORLDS = ConcurrentHashMap.newKeySet();
     public static final @NotNull PrivateFieldHandler privateFieldHandler;
     public static TLogger logger;
 
@@ -83,6 +84,8 @@ public class TerraformGeneratorPlugin extends JavaPlugin implements Listener {
         super.onEnable();
         instance = this;
         taskScheduler = isPaperOrFolia() ? new FoliaScheduler() : new SpigotScheduler();
+        StructureGenerationService.start();
+        DeferredRegionTaskTracker.start();
 
         try {
             TConfig.init(new File(getDataFolder(), "config.yml"));
@@ -175,51 +178,16 @@ public class TerraformGeneratorPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
-        // This is already done in NativeGeneratorPatcherPopulator World Unload Event.
-        // NativeGeneratorPatcherPopulator.flushChanges();
+        StructureGenerationService.cancelAll();
+        DeferredRegionTaskTracker.cancelAll();
     }
 
-    /**
-     * Legacy thing. Consider removal.
-     *
-     * @deprecated
-     */
-    @Deprecated
-    @EventHandler
-    public void onWorldLoad(@NotNull WorldLoadEvent event) {
-        if (event.getWorld().getGenerator() instanceof TerraformGenerator) {
-            logger.stdout(event.getWorld().getName() + " loaded.");
-            if (!TerraformGenerator.preWorldInitGen.isEmpty()) {
-                if (!TConfig.c.DEVSTUFF_ATTEMPT_FIXING_PREMATURE) {
-                    logger.stdout("&cIgnoring "
-                                  + TerraformGenerator.preWorldInitGen.size()
-                                  + " pre-maturely generated chunks."
-                                  + " You may see a patch of plain land.");
-                    return;
-                }
-                logger.stdout("&6Trying to decorate "
-                              + TerraformGenerator.preWorldInitGen.size()
-                              + " pre-maturely generated chunks.");
-                int fixed = 0;
-                TerraformWorld tw = TerraformWorld.get(event.getWorld());
-                for (SimpleChunkLocation sc : TerraformGenerator.preWorldInitGen) {
-                    if (!sc.getWorld().equals(event.getWorld().getName())) {
-                        continue;
-                    }
-                    logger.stdout("Populating " + sc);
-                    PopulatorDataPostGen data = new PopulatorDataPostGen(sc.toChunk());
-                    new TerraformPopulator().populate(tw, data);
-                    fixed++;
-                }
-                logger.stdout("&aSuccessfully finished fixing " + fixed + " pre-mature chunks!");
-
-            }
-        }
-    }
 
     @SuppressWarnings("unused")
     @EventHandler
     public void onWorldInit(@NotNull WorldInitEvent event) {
+        DeferredRegionTaskTracker.allowWorld(event.getWorld());
+        StructureGenerationService.allowWorld(event.getWorld());
         if (event.getWorld().getGenerator() instanceof TerraformGenerator) {
             logger.stdout("Detected world: " + event.getWorld().getName() + ", commencing injection... ");
             TerraformWorld tw = TerraformWorld.forceOverrideSeed(event.getWorld());
@@ -229,7 +197,6 @@ public class TerraformGeneratorPlugin extends JavaPlugin implements Listener {
                 tw.maxY = injector.getMaxY();
 
                 logger.stdout("&aInjection success! Proceeding with generation.");
-
             }
             else {
                 logger.stdout("&cInjection failed.");
@@ -237,10 +204,56 @@ public class TerraformGeneratorPlugin extends JavaPlugin implements Listener {
         }
     }
 
+
+    @EventHandler
+    public void onWorldLoad(@NotNull WorldLoadEvent event) {
+        StructureGenerationService.allowWorld(event.getWorld());
+        DeferredRegionTaskTracker.allowWorld(event.getWorld());
+        if (!(event.getWorld().getGenerator() instanceof TerraformGenerator)) {
+            return;
+        }
+        logger.stdout(event.getWorld().getName() + " loaded.");
+        java.util.List<SimpleChunkLocation> worldRepairs;
+        synchronized (TerraformGenerator.preWorldInitGen) {
+            worldRepairs = TerraformGenerator.preWorldInitGen.stream()
+                    .filter(location -> location.getWorld().equals(event.getWorld().getName()))
+                    .toList();
+        }
+        if (worldRepairs.isEmpty()) {
+            return;
+        }
+        if (!TConfig.c.DEVSTUFF_ATTEMPT_FIXING_PREMATURE) {
+            logger.stdout("&cIgnoring "
+                          + worldRepairs.size()
+                          + " pre-maturely generated chunks. You may see a patch of plain land.");
+            return;
+        }
+
+        TerraformWorld tw = TerraformWorld.get(event.getWorld());
+        int queued = 0;
+        for (SimpleChunkLocation location : worldRepairs) {
+            logger.stdout("Scheduling repair for " + location);
+            StructureGenerationService.submit(event.getWorld(),
+                    tw,
+                    location.getX(),
+                    location.getZ(),
+                    java.util.List.of(),
+                    data -> new TerraformPopulator().populateRepair(tw, data),
+                    () -> {
+                        synchronized (TerraformGenerator.preWorldInitGen) {
+                            TerraformGenerator.preWorldInitGen.removeIf(location::equals);
+                        }
+                    });
+            queued++;
+        }
+        logger.stdout("Scheduled repair for " + queued + " pre-maturely generated chunks.");
+    }
     @SuppressWarnings("unused")
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onWorldUnload(WorldUnloadEvent event){
-        if(INJECTED_WORLDS.contains(event.getWorld().getName())) {
+    public void onWorldUnload(WorldUnloadEvent event) {
+        StructureGenerationService.cancelWorld(event.getWorld());
+        DeferredRegionTaskTracker.cancelWorld(event.getWorld());
+        if (INJECTED_WORLDS.remove(event.getWorld().getName())) {
             logger.stdout("Flushing noise cache for world " + event.getWorld().getName());
             NoiseCacheHandler.flushNoiseCaches(TerraformWorld.get(event.getWorld()));
         }

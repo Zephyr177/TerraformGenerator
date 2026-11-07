@@ -12,7 +12,7 @@ import org.terraform.biome.BiomeType;
 import org.terraform.coregen.NaturalSpawnType;
 import org.terraform.coregen.bukkit.TerraformGenerator;
 import org.terraform.coregen.populatordata.PopulatorDataAbstract;
-import org.terraform.coregen.populatordata.PopulatorDataPostGen;
+import org.terraform.coregen.populatordata.IPopulatorDataStructureEffects;
 import org.terraform.data.*;
 import org.terraform.main.TerraformGeneratorPlugin;
 import org.terraform.main.config.TConfig;
@@ -127,6 +127,9 @@ public class MonumentPopulator extends SingleMegaChunkStructurePopulator {
     }
 
     private static void setupGuardianSpawns(@NotNull PopulatorDataAbstract data, int range, int x, int y, int z) {
+        if (!(data instanceof IPopulatorDataStructureEffects effects)) {
+            throw new IllegalStateException("Monument generation requires structure effect support");
+        }
         int i = -5;
         ArrayList<Integer> done = new ArrayList<>();
         for (int nx = x - range / 2 - i; nx <= x + range / 2 + i; nx++) {
@@ -140,19 +143,17 @@ public class MonumentPopulator extends SingleMegaChunkStructurePopulator {
                 }
 
                 done.add(hash);
-                TerraformGeneratorPlugin.injector.getICAData(((PopulatorDataPostGen) data).getWorld()
-                                                                                          .getChunkAt(chunkX, chunkZ))
-                                                 .registerNaturalSpawns(NaturalSpawnType.GUARDIAN,
-                                                         x - range / 2,
-                                                         y,
-                                                         z - range / 2,
-                                                         x + range / 2,
-                                                         TerraformGenerator.seaLevel,
-                                                         z + range / 2
-                                                 );
+                effects.registerNaturalSpawns(NaturalSpawnType.GUARDIAN,
+                        chunkX,
+                        chunkZ,
+                        x - range / 2,
+                        y,
+                        z - range / 2,
+                        x + range / 2,
+                        TerraformGenerator.seaLevel,
+                        z + range / 2);
             }
         }
-
     }
 
     @Override

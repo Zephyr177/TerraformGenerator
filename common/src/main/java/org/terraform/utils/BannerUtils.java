@@ -11,7 +11,7 @@ import org.bukkit.block.data.Directional;
 import org.bukkit.block.data.Rotatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.terraform.coregen.populatordata.PopulatorDataPostGen;
+import org.terraform.coregen.populatordata.IPopulatorDataStructureEffects;
 import org.terraform.data.SimpleBlock;
 import org.terraform.utils.version.V_1_20_5;
 
@@ -107,19 +107,15 @@ public class BannerUtils {
         bd.setFacing(facing);
         base.setBlockData(bd);
 
-        Banner banner = (Banner) ((PopulatorDataPostGen) base.getPopData()).getBlockState(
-                base.getX(),
-                base.getY(),
-                base.getZ()
-        );
-        if (patterns == null) {
-            patterns = new ArrayList<>();
+        if (!(base.getPopData() instanceof IPopulatorDataStructureEffects effects)) {
+            throw new IllegalStateException("Banner pattern generation requires structure effect support");
         }
+        effects.editBlockState(base.getX(), base.getY(), base.getZ(), true, false, state -> {
+            Banner banner = (Banner) state;
+            banner.setPatterns(patterns == null ? new ArrayList<>() : patterns);
+        });
 
-        banner.setPatterns(patterns);
-        banner.update();
     }
-
     public static void generateBanner(@NotNull Random rand,
                                       @NotNull SimpleBlock base,
                                       @NotNull BlockFace facing,
@@ -145,22 +141,20 @@ public class BannerUtils {
             base.setBlockData(bd);
         }
 
-        Banner banner = (Banner) ((PopulatorDataPostGen) base.getPopData()).getBlockState(
-                base.getX(),
-                base.getY(),
-                base.getZ()
-        );
-        ArrayList<Pattern> patterns = new ArrayList<>();
-
-        for (int i = 1 + rand.nextInt(3); i < 4 + rand.nextInt(3); i++) {
-            patterns.add(new Pattern(DyeColor.values()[rand.nextInt(DyeColor.values().length)],
-                    PATTERNS[rand.nextInt(PATTERNS.length)]
-            ));
+        if (!(base.getPopData() instanceof IPopulatorDataStructureEffects effects)) {
+            throw new IllegalStateException("Banner pattern generation requires structure effect support");
         }
-        banner.setPatterns(patterns);
-        banner.update();
-    }
+        effects.editBlockState(base.getX(), base.getY(), base.getZ(), true, false, state -> {
+            Banner banner = (Banner) state;
+            ArrayList<Pattern> patterns = new ArrayList<>();
+            for (int i = 1 + rand.nextInt(3); i < 4 + rand.nextInt(3); i++) {
+                patterns.add(new Pattern(DyeColor.values()[rand.nextInt(DyeColor.values().length)],
+                        PATTERNS[rand.nextInt(PATTERNS.length)]));
+            }
+            banner.setPatterns(patterns);
+        });
 
+    }
     public static void generatePillagerBanner(@NotNull SimpleBlock base,
                                               @NotNull BlockFace facing,
                                               boolean wallBanner)
@@ -185,17 +179,15 @@ public class BannerUtils {
             base.setBlockData(bd);
         }
 
-        Banner banner = (Banner) ((PopulatorDataPostGen) base.getPopData()).getBlockState(
-                base.getX(),
-                base.getY(),
-                base.getZ()
-        );
+        if (!(base.getPopData() instanceof IPopulatorDataStructureEffects effects)) {
+            throw new IllegalStateException("Banner pattern generation requires structure effect support");
+        }
+        ArrayList<Pattern> ominousPatterns = getOminousBannerPatterns();
+        effects.editBlockState(base.getX(), base.getY(), base.getZ(), true, false, state ->
+                ((Banner) state).setPatterns(ominousPatterns));
 
-        banner.setPatterns(getOminousBannerPatterns());
-        banner.update();
+
     }
-
-
     public static void randomBannerMaterial(@NotNull Random rand) {
         rand.nextInt(BANNERS.length);
     }

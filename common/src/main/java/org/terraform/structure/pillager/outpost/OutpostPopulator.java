@@ -8,8 +8,12 @@ import org.jetbrains.annotations.NotNull;
 import org.terraform.biome.BiomeBank;
 import org.terraform.coregen.NaturalSpawnType;
 import org.terraform.coregen.populatordata.PopulatorDataAbstract;
-import org.terraform.coregen.populatordata.PopulatorDataPostGen;
+import org.terraform.coregen.populatordata.IPopulatorDataGroundHeight;
+import org.terraform.coregen.populatordata.IPopulatorDataBatchBlockWriter;
+import org.terraform.coregen.populatordata.IPopulatorDataStructureEffects;
+import org.terraform.coregen.populatordata.IPopulatorDataGroundInvalidation;
 import org.terraform.data.*;
+import org.terraform.coregen.bukkit.TerraformGenerator;
 import org.terraform.main.TerraformGeneratorPlugin;
 import org.terraform.main.config.TConfig;
 import org.terraform.schematic.TerraSchematic;
@@ -26,6 +30,7 @@ import org.terraform.utils.blockdata.StairBuilder;
 import org.terraform.utils.noise.FastNoise;
 import org.terraform.utils.noise.FastNoise.NoiseType;
 
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Random;
@@ -34,6 +39,9 @@ public class OutpostPopulator extends SingleMegaChunkStructurePopulator {
     private Material[] stakeGravel;
 
     private static void setupPillagerSpawns(@NotNull PopulatorDataAbstract data, int x, int y, int z) {
+        if (!(data instanceof IPopulatorDataStructureEffects effects)) {
+            throw new IllegalStateException("Outpost generation requires structure effect support");
+        }
         int i = -5;
         ArrayList<Integer> done = new ArrayList<>();
         for (int nx = x - 80 / 2 - i; nx <= x + 80 / 2 + i; nx++) {
@@ -47,17 +55,15 @@ public class OutpostPopulator extends SingleMegaChunkStructurePopulator {
                 }
 
                 done.add(hash);
-
-                TerraformGeneratorPlugin.injector.getICAData(((PopulatorDataPostGen) data).getWorld()
-                                                                                          .getChunkAt(chunkX, chunkZ))
-                                                 .registerNaturalSpawns(NaturalSpawnType.PILLAGER,
-                                                         x - 80 / 2,
-                                                         y,
-                                                         z - 80 / 2,
-                                                         x + 80 / 2,
-                                                         255,
-                                                         z + 80 / 2
-                                                 );
+                effects.registerNaturalSpawns(NaturalSpawnType.PILLAGER,
+                        chunkX,
+                        chunkZ,
+                        x - 80 / 2,
+                        y,
+                        z - 80 / 2,
+                        x + 80 / 2,
+                        255,
+                        z + 80 / 2);
             }
         }
     }
@@ -164,6 +170,13 @@ public class OutpostPopulator extends SingleMegaChunkStructurePopulator {
                                                   + z
                                                   + "!");
             TerraformGeneratorPlugin.logger.stackTrace(e);
+            if (e instanceof RuntimeException runtimeException) {
+                throw runtimeException;
+            }
+            if (e instanceof Error error) {
+                throw error;
+            }
+            throw new IllegalStateException("Outpost placement failed", e);
         }
     }
 
@@ -179,28 +192,85 @@ public class OutpostPopulator extends SingleMegaChunkStructurePopulator {
         noise.SetNoiseType(NoiseType.Simplex);
         noise.SetFrequency(0.09f);
 
-        for (float x = -radius; x <= radius; x++) {
-            for (float z = -radius; z <= radius; z++) {
-                SimpleBlock rel = center.getRelative(Math.round(x), 0, Math.round(z)).getGroundOrSeaLevel();
+        if (!(center.getPopData() instanceof IPopulatorDataGroundHeight groundHeight)
+            || !(center.getPopData() instanceof IPopulatorDataGroundInvalidation groundInvalidation)
+            || !(center.getPopData() instanceof IPopulatorDataBatchBlockWriter batchWriter))
+        {
+            for (float x = -radius; x <= radius; x++) {
+                for (float z = -radius; z <= radius; z++) {
+                    SimpleBlock rel = center.getRelative(Math.round(x), 0, Math.round(z)).getGroundOrSeaLevel();
+                    double mainRadiusResult = Math.pow(x, 2) / Math.pow(radius, 2)
+                                              + Math.pow(z, 2) / Math.pow(radius, 2);
+                    double secondaryRadiusResult = mainRadiusResult * 1.3;
+                    double noiseVal = noise.GetNoise(rel.getX(), rel.getZ());
+                    if (mainRadiusResult <= 1 + 0.7 * noiseVal) {
+                        rel.lsetType(planksMat);
+                        if (secondaryRadiusResult > 1 + 0.7 * noiseVal) {
+                            BlockUtils.replaceCircularPatch(rand.nextInt(4211), 1.5f, rel, stakeGravel);
+                            spawnOneStake(rand, rel.getUp(), bank, stakeGravel);
+                        }
+                    }
+                }
+            }
+            return;
+        }
 
-                // double radiusSquared = Math.pow(trueRadius+noise.GetNoise(rel.getX(), rel.getY(), rel.getZ())*2,2);
-                double mainRadiusResult = Math.pow(x, 2) / Math.pow(radius, 2) + Math.pow(z, 2) / Math.pow(radius, 2);
+        int sampleCount = (radius * 2 + 1) * (radius * 2 + 1);
+        int[] sampleX = new int[sampleCount];
+        int[] sampleZ = new int[sampleCount];
+        int sample = 0;
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                sampleX[sample] = center.getX() + x;
+                sampleZ[sample] = center.getZ() + z;
+                sample++;
+            }
+        }
+
+        int[] groundHeights = groundHeight.getHighestGrounds(sampleX,
+                sampleZ,
+                TerraformGeneratorPlugin.injector.getMinY(),
+                TerraformGeneratorPlugin.injector.getMaxY(),
+                GenUtils::isGroundLike);
+        List<IPopulatorDataBatchBlockWriter.Placement> pendingPlacements = new ArrayList<>();
+        sample = 0;
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                int sampleIndex = sample++;
+                int rawX = sampleX[sampleIndex];
+                int rawZ = sampleZ[sampleIndex];
+                int groundY = Math.max(groundHeights[sampleIndex], TerraformGenerator.seaLevel);
+                if (groundInvalidation.isGroundColumnDirty(rawX, rawZ)) {
+                    groundY = Math.max(GenUtils.getHighestGround(center.getPopData(), rawX, rawZ),
+                            TerraformGenerator.seaLevel);
+                }
+                SimpleBlock rel = new SimpleBlock(center.getPopData(), rawX, groundY, rawZ);
+
+                double mainRadiusResult = Math.pow(x, 2) / Math.pow(radius, 2)
+                                          + Math.pow(z, 2) / Math.pow(radius, 2);
                 double secondaryRadiusResult = mainRadiusResult * 1.3;
                 double noiseVal = noise.GetNoise(rel.getX(), rel.getZ());
                 if (mainRadiusResult <= 1 + 0.7 * noiseVal) {
-
-                    // Raise water ground
-                    rel.lsetType(planksMat);
                     if (secondaryRadiusResult > 1 + 0.7 * noiseVal) {
-                        // Rocky ground
+                        if (!pendingPlacements.isEmpty()) {
+                            batchWriter.setTypeIfNotSolidBatch(pendingPlacements, true);
+                            pendingPlacements.clear();
+                        }
+                        batchWriter.setTypeIfNotSolid(rel.getX(), rel.getY(), rel.getZ(), planksMat, true);
                         BlockUtils.replaceCircularPatch(rand.nextInt(4211), 1.5f, rel, stakeGravel);
-
                         spawnOneStake(rand, rel.getUp(), bank, stakeGravel);
                     }
-
+                    else {
+                        pendingPlacements.add(new IPopulatorDataBatchBlockWriter.Placement(
+                                rel.getX(), rel.getY(), rel.getZ(), planksMat));
+                    }
                 }
             }
         }
+        if (!pendingPlacements.isEmpty()) {
+            batchWriter.setTypeIfNotSolidBatch(pendingPlacements, true);
+        }
+        batchWriter.flushBlockWrites();
     }
 
     public void spawnOneStake(@NotNull Random rand,
